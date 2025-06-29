@@ -81,8 +81,14 @@ ZorroDI
     {
         options.AddDefaultPolicy(builder =>
         {
+            List<string> origins = ["https://system.printo.studio"];
+            if (ZorroDI.environment == Zorro.Enums.Environment.Development)
+            {
+                origins.Add("http://localhost:5173");
+            }
+
             builder
-                .WithOrigins(["http://localhost:5173"])
+                .WithOrigins(origins.ToArray())
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
