@@ -24,7 +24,7 @@ public class JwtAuthController : Controller
     {
         return this.StartQuery()
 
-        .SignInUser<User, int>(input)
+        .Eject(_ => _.SignInUser<User, int>(input), out var me)
 
         .MapToDTO<User, UserDTO>()
 
@@ -46,17 +46,27 @@ public class JwtAuthController : Controller
 
         .SignUpUser<User, int>(input)
 
-        .Eject(out User user)
+        .Eject(out User me)
 
-        .Eject(new InvitationToken.UseForm(user.Id), out var tokenUseForm)
+        .Eject(new InvitationToken.UseForm(me.Id), out var tokenUseForm)
 
         .Update<InvitationToken, InvitationToken.UseForm>(tokenEntity.Id, tokenUseForm)
 
-        .SwitchTo(user)
+        .Eject(_ => _.GetAll<Store>(), out var stores)
+
+        .Eject(stores.ToArray(), out var storesArray)
+
+        .ForEach<Store, object, object>(storesArray, (store, _) => _
+            .Eject(new Store.UserJoinForm(me), out var joinForm)
+
+            .Update<Store, Store.UserJoinForm>(store.Id, joinForm)
+        )
+
+        .SwitchTo(me)
 
         .MapToDTO<User, UserDTO>()
 
-        .EndAndDirectTo("/products");
+        .EndAndDirectTo("/signIn");
     }
 
     [HttpGet]
