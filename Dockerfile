@@ -1,10 +1,11 @@
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG TARGETARCH
 ARG NUGET_TOKEN
+ARG NUGET_SOURCE
 WORKDIR /source
 
 # Add GitHub Packages NuGet source
-RUN dotnet nuget add source "$NUGET_SOURCE" --name github --username Hilboard --password $NUGET_TOKEN --store-password-in-clear-text
+RUN dotnet nuget add source $NUGET_SOURCE --name github --username PrintO-Studio --password $NUGET_TOKEN --store-password-in-clear-text
 
 # Copy csproj and restore as distinct layers
 COPY *.csproj .
