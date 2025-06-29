@@ -1,8 +1,6 @@
 name: Test Build And Deploy A Docker Image
 
 on:
-  push:
-    branches: ['stable']
   pull_request:
     branches: ['stable']
 
