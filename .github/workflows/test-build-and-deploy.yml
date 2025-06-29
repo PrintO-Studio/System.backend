@@ -1,0 +1,70 @@
+name: Test Build And Deploy A Docker Image
+
+on:
+  push:
+    branches: ['stable']
+  pull_request:
+    branches: ['stable']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NUGET_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+
+jobs:
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Execute Unit Tests
+      run: dotnet test --no-build --verbosity normal
+
+  build-and-push-docker-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Log in to the Container Registry
+      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Extract Metadata for Docker Image
+      id: meta
+      uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    - name: Build and Push Docker Image
+      id: push
+      uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          NUGET_TOKEN=${{ secrets.NUGET_TOKEN }}
+          NUGET_SOURCE=${{ env.NUGET_SOURCE }}
+  dokploy-deployment:
+    name: Deploy with Dokploy
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker-image
+    steps:
+    - name: Invoke Deployment Hook
+      uses: distributhor/workflow-webhook@v3
+      with:
+        webhook_type: 'form-urlencoded'
+        webhook_url: ${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}
