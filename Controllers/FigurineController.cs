@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Minio;
+using Minio.DataModel;
+using PrintO.Models;
 using PrintO.Models.Products;
 using PrintO.Models.Products.Figurine;
 using PrintO.Query;
@@ -7,6 +10,7 @@ using Zorro.Middlewares;
 using Zorro.Modules.JwtBearer.Attributes;
 using Zorro.Query;
 using Zorro.Query.Essentials;
+using Zorro.Query.Essentials.BucketRepository;
 using Zorro.Query.Essentials.ModelRepository;
 
 namespace PrintO;
@@ -115,6 +119,43 @@ public class FigurineController : Controller
         )
 
         .End();
+    }
+
+    [HttpDelete]
+    [Route("products/{productId}/figurines")]
+    public IActionResult DeleteFigurine(int productId)
+    {
+        return this.StartQuery()
+
+        .CheckStoreMembership(out int selectedStoreId)
+
+        .Eject(_ => _.Find<FigurineReference>(f => f.product.storeId == selectedStoreId && f.productId == productId), out var figurine)
+
+        .Eject(_ => _.GetAllWhere<ImageReference>(i => i.productId == productId), out var images)
+        .Eject(images.ToArray(), out var imageArray)
+        .ForEach(imageArray, (image, _) => _
+            .Remove<ImageReference>(image.Id)
+        )
+
+        .Eject(_ => _.GetAllWhere<Models.File>(i => i.productId == productId), out var files)
+        .Eject(files.ToArray(), out var fileArray)
+        .ForEach(fileArray, (file, _) => _
+            .Delete<MinIORepository, IMinioClient, Bucket, Item>(file.filePath)
+
+            .Remove<Models.File>(file.Id)
+        )
+
+        .Eject(_ => _.GetAllWhere<FigurineVariation>(i => i.figurineId == figurine.Id), out var variations)
+        .Eject(variations.ToArray(), out var variationArray)
+        .ForEach(variationArray, (variation, _) => _
+            .Remove<FigurineVariation>(variation.Id)
+        )
+
+        .Remove<FigurineReference>(figurine.Id)
+
+        .Remove<Product>(productId)
+
+        .EndAndDirectTo("/products");
     }
 
     public struct UserAddForm
