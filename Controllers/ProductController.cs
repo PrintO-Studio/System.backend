@@ -15,7 +15,7 @@ public class ProductController : Controller
 {
     [HttpGet]
     [Route("/products")]
-    public IActionResult GetAllProducts(int startIndex, int pageSize = 12)
+    public IActionResult GetAllProducts(string? searchQuery, int startIndex, int pageSize = 12)
     {
         var minIORepo = HttpContext.RequestServices.GetService<MinIORepository>()!;
 
@@ -27,7 +27,21 @@ public class ProductController : Controller
 
         .SetInclusion("INCLUDE_IMAGES")
 
-        .GetAllWhere<Product>(f => f.storeId == selectedStoreId)
+        .Eject(Array.Empty<Product>(), out IEnumerable<Product> qualifiedProducts)
+        
+        .If(string.IsNullOrEmpty(searchQuery), _ => _
+             .Eject(_ => _.GetAllWhere<Product>(p => p.storeId == selectedStoreId), out var products)
+
+             .Execute(() => qualifiedProducts = products)
+        )!
+
+        .If(!string.IsNullOrEmpty(searchQuery), _ => _
+             .Eject(_ => _.GetAllWhere<Product>(p => p.storeId == selectedStoreId && (p.name.Contains(searchQuery!) || p.SKU.Contains(searchQuery!))), out var products)
+
+             .Execute(() => qualifiedProducts = products)
+        )
+
+        .SwitchTo(qualifiedProducts)
 
         .MapToDTOs<Product, object>(p => new { minIORepo })
 
