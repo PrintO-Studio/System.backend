@@ -1,5 +1,4 @@
-﻿using Dumpify;
-using Microsoft.AspNetCore.Http.Features;
+﻿using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using PrintO;
 using PrintO.Models;
@@ -43,7 +42,7 @@ MySQLService.ConnectionStringMaster = new MySQLService.ConnectionStringBuilder(b
 MinIOService.SettingsMaster = new MinIOService.MinIOSettingsBuilder(settings =>
 {
     settings.secure = true;
-    settings.defaultBucket = "storage-bucket";
+    settings.defaultBucket = GetSecretValue("/MINIO", "BUCKET");
     settings.endpoint = GetSecretValue("/MINIO", "ENDPOINT");
     settings.accessKey = GetSecretValue("/MINIO", "ACCESS_KEY");
     settings.secretKey = GetSecretValue("/MINIO", "SECRET_KEY");
@@ -110,37 +109,6 @@ ZorroDI
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         //options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
     });
-
-var sensetiveDataLog = Environment.GetEnvironmentVariable("SENSETIVE_DATA_LOG");
-if (!string.IsNullOrEmpty(sensetiveDataLog) && sensetiveDataLog == "true")
-{
-    new
-    {
-        infisicalSettings.clientSecret,
-        infisicalSettings.URL,
-        infisicalSettings.clientId,
-        infisicalSettings.projectId
-    }.Dump();
-
-    MySQLService.ConnectionStringMaster(new()).Dump();
-
-    var minIOSettings = MinIOService.SettingsMaster(new());
-    new
-    {
-        minIOSettings.secure,
-        minIOSettings.accessKey,
-        minIOSettings.secretKey,
-        minIOSettings.defaultBucket,
-        minIOSettings.endpoint
-    }.Dump();
-
-    var jwtBearerSettings = JwtBearerService.TokenValidationMaster(new());
-    new
-    {
-        jwtBearerSettings.ValidIssuer,
-        jwtBearerSettings.ValidAudience
-    }.Dump();
-}
 
 var app = ZorroDI.Build();
 app.UseMiddleware<ErrorHandlingMiddleware>();
