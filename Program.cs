@@ -29,7 +29,7 @@ InfisicalSettings infisicalSettings = new InfisicalSettings()
 
 MySQLService.ConnectionStringMaster = new MySQLService.ConnectionStringBuilder(builder =>
 {
-    builder.AllowPublicKeyRetrieval = true;
+    builder.AllowPublicKeyRetrieval = false;
     builder.SslMode = MySqlConnector.MySqlSslMode.Disabled;
     builder.Server = GetSecretValue("/MYSQL", "SERVER");
     builder.Port = GetSecretValue("/MYSQL", "PORT", uint.Parse);
