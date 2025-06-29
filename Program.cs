@@ -116,10 +116,29 @@ if (!string.IsNullOrEmpty(sensetiveDataLog) && sensetiveDataLog == "true")
 {
     new
     {
-        infisicalSettings,
-        MySQLService.ConnectionStringMaster,
-        MinIOService.SettingsMaster,
-        JwtBearerService.TokenValidationMaster
+        infisicalSettings.clientSecret,
+        infisicalSettings.URL,
+        infisicalSettings.clientId,
+        infisicalSettings.projectId
+    }.Dump();
+
+    MySQLService.ConnectionStringMaster(new()).Dump();
+
+    var minIOSettings = MinIOService.SettingsMaster(new());
+    new
+    {
+        minIOSettings.secure,
+        minIOSettings.accessKey,
+        minIOSettings.secretKey,
+        minIOSettings.defaultBucket,
+        minIOSettings.endpoint
+    }.Dump();
+
+    var jwtBearerSettings = JwtBearerService.TokenValidationMaster(new());
+    new
+    {
+        jwtBearerSettings.ValidIssuer,
+        jwtBearerSettings.ValidAudience
     }.Dump();
 }
 
