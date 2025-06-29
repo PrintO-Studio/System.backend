@@ -18,16 +18,11 @@ public class InvitationToken : IEntity, IDataTransferObject<object>, IAddable<In
     public int? usedByUserId { get; set; }
     public User? usedByUser { get; set; }
 
-    [ForeignKey(nameof(createdByUser))]
-    public int createdByUserId { get; set; }
-    public User createdByUser { get; set; } = null!;
-
     public DateTime createdAt { get; set; }
     public DateTime? usedAt { get; set; }
 
     public bool AddFill(AddForm form)
     {
-        createdByUserId = form.createdByUserId;
         createdAt = DateTime.UtcNow;
 
         token = Guid.NewGuid().ToString();
@@ -57,12 +52,7 @@ public class InvitationToken : IEntity, IDataTransferObject<object>, IAddable<In
 
     public struct AddForm
     {
-        public int createdByUserId { get; set; }
-
-        public AddForm(int createdByUserId)
-        {
-            this.createdByUserId = createdByUserId;
-        }
+        
     }
 
     public struct UseForm
