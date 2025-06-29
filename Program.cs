@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http.Features;
+﻿using Dumpify;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using PrintO;
 using PrintO.Models;
@@ -67,6 +68,7 @@ JwtBearerService.TokenValidationMaster = new JwtBearerService.TokenValidationBui
     return validation;
 });
 
+
 ZorroDI
     .InitRaw(args)
     .AddInfisical(infisicalSettings)
@@ -108,6 +110,18 @@ ZorroDI
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         //options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
     });
+
+var sensetiveDataLog = Environment.GetEnvironmentVariable("SENSETIVE_DATA_LOG");
+if (!string.IsNullOrEmpty(sensetiveDataLog) && sensetiveDataLog == "true")
+{
+    new
+    {
+        infisicalSettings,
+        MySQLService.ConnectionStringMaster,
+        MinIOService.SettingsMaster,
+        JwtBearerService.TokenValidationMaster
+    }.Dump();
+}
 
 var app = ZorroDI.Build();
 app.UseMiddleware<ErrorHandlingMiddleware>();
