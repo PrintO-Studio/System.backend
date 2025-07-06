@@ -29,4 +29,5 @@ publish/
 nupkg/
 *.nupkg
 
-*.json
+appsettings.json
+products.json
