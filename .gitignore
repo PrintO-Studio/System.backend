@@ -29,4 +29,4 @@ publish/
 nupkg/
 *.nupkg
 
-appsettings.json
+*.json
