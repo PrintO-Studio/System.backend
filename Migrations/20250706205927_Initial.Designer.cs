@@ -9,11 +9,11 @@ using PrintO;
 
 #nullable disable
 
-namespace PrintO.Migrations
+namespace PrintOSystem.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250628214303_Product_versions")]
-    partial class Product_versions
+    [Migration("20250706205927_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,9 +162,6 @@ namespace PrintO.Migrations
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("createdByUserId")
-                        .HasColumnType("int");
-
                     b.Property<string>("token")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -180,8 +177,6 @@ namespace PrintO.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("createdByUserId");
 
                     b.HasIndex("usedByUserId");
 
@@ -229,6 +224,12 @@ namespace PrintO.Migrations
                     b.Property<uint>("heightMm")
                         .HasColumnType("int unsigned");
 
+                    b.Property<int>("integrity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("isActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<uint?>("maxHeightMm")
                         .HasColumnType("int unsigned");
 
@@ -249,8 +250,15 @@ namespace PrintO.Migrations
                     b.Property<ulong>("priceRub")
                         .HasColumnType("bigint unsigned");
 
+                    b.Property<uint>("quantity")
+                        .HasColumnType("int unsigned");
+
                     b.Property<int?>("scale")
                         .HasColumnType("int");
+
+                    b.Property<string>("series")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<uint>("weightGr")
                         .HasColumnType("int unsigned");
@@ -469,17 +477,9 @@ namespace PrintO.Migrations
 
             modelBuilder.Entity("PrintO.Models.InvitationToken", b =>
                 {
-                    b.HasOne("PrintO.Models.User", "createdByUser")
-                        .WithMany()
-                        .HasForeignKey("createdByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("PrintO.Models.User", "usedByUser")
                         .WithMany()
                         .HasForeignKey("usedByUserId");
-
-                    b.Navigation("createdByUser");
 
                     b.Navigation("usedByUser");
                 });

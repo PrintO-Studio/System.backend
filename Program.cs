@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http.Features;
+﻿using Dumpify;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using PrintO;
+using PrintO.Intergrations;
 using PrintO.Models;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -82,8 +84,8 @@ ZorroDI
     {
         options.AddDefaultPolicy(builder =>
         {
-            List<string> origins = ["https://system.printo.studio"];
-            if (ZorroDI.environment == Zorro.Enums.Environment.Development)
+            List<string> origins = ["https://dashboard.printo.studio"];
+            if (ZorroDI.environment == Zorro.Enums.Environment.Development || ZorroDI.environment == Zorro.Enums.Environment.Staging)
             {
                 origins.Add("http://localhost:5173");
             }
@@ -102,6 +104,7 @@ ZorroDI
     {
         options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024; // 2Gb
     })
+    .AddScoped<OzonIntegration>()
     .AddControllers()
     .AddJsonOptions(options =>
     {

@@ -51,6 +51,6 @@ public class UserController : Controller
 
         .Update(new User.SelectStoreForm(id))
 
-        .End();
+        .EndAndDirectTo("/products");
     }
 }

@@ -8,7 +8,7 @@ using PrintO;
 
 #nullable disable
 
-namespace PrintO.Migrations
+namespace PrintOSystem.Migrations
 {
     [DbContext(typeof(DataContext))]
     partial class DataContextModelSnapshot : ModelSnapshot
@@ -221,6 +221,12 @@ namespace PrintO.Migrations
                     b.Property<uint>("heightMm")
                         .HasColumnType("int unsigned");
 
+                    b.Property<int>("integrity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("isActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<uint?>("maxHeightMm")
                         .HasColumnType("int unsigned");
 
@@ -241,8 +247,15 @@ namespace PrintO.Migrations
                     b.Property<ulong>("priceRub")
                         .HasColumnType("bigint unsigned");
 
+                    b.Property<uint>("quantity")
+                        .HasColumnType("int unsigned");
+
                     b.Property<int?>("scale")
                         .HasColumnType("int");
+
+                    b.Property<string>("series")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<uint>("weightGr")
                         .HasColumnType("int unsigned");
