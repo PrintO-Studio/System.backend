@@ -1,3 +1,4 @@
+using PrintO.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data.Interfaces;
@@ -15,8 +16,12 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
     [InverseProperty(nameof(FigurineReference.variations))]
     public FigurineReference figurine { get; set; } = null!;
 
+    public bool isActive { get; set; } = true;
+
     [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
     public string name { get; set; } = null!;
+    [StringLength(FIGURINE_VARIATION_SERIES_MAX_LENGTH)]
+    public string? series { get; set; }
     public Scale? scale { get; set; }
     public Color color { get; set; }
     [Range(FIGURINE_VARIATION_WEIGHT_GR_MIN, FIGURINE_VARIATION_WEIGHT_GR_MAX)]
@@ -43,9 +48,17 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
     [Range(FIGURINE_VARIATION_PRICE_RUB_MIN, FIGURINE_VARIATION_PRICE_RUB_MAX)]
     public ulong minimalPriceRub { get; set; }
 
+    public Integrity integrity { get; set; } = Integrity.Solid;
+    [Range(FIGURINE_VARIATION_QUANTITY_MIN, FIGURINE_VARIATION_QUANTITY_MAX)]
+    public uint quantity { get; set; }
+
     public bool AddFill(AddForm form)
     {
+        isActive = form.addForm.isActive ?? true;
+        figurineId = form.figurineId;
+
         name = form.addForm.name;
+        series = form.addForm.series;
         scale = form.addForm.scale;
         color = form.addForm.color;
         weightGr = form.addForm.weightGr;
@@ -62,35 +75,32 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         priceBeforeSaleRub = form.addForm.priceBeforeSaleRub;
         minimalPriceRub = form.addForm.minimalPriceRub;
 
-        figurineId = form.figurineId;
+        integrity = form.addForm.integrity;
+        quantity = form.addForm.quantity;
 
         return true;
     }
 
     public bool UpdateFill(UpdateForm form)
     {
-        if (form.name is not null)
+        if (form.isActive.HasValue)
+            isActive = form.isActive.Value;
+        if (!string.IsNullOrEmpty(form.name))
             name = form.name;
-        if (scale.HasValue)
-            scale = form.scale!.Value;
+        series = form.series;
+        scale = form.scale;
         if (form.color.HasValue)
             color = form.color.Value;
         if (form.weightGr.HasValue)
             weightGr = form.weightGr.Value;
-
-        if(form.heightMm.HasValue) 
+        if (form.heightMm.HasValue)
             heightMm = form.heightMm.Value;
-        if (form.widthMm.HasValue)
-            widthMm = form.widthMm.Value;
-        if (form.depthMm.HasValue)
-            depthMm = form.depthMm.Value;
+        widthMm = form.widthMm;
+        depthMm = form.depthMm;
 
-        if (form.maxHeightMm.HasValue)
-            maxHeightMm = form.maxHeightMm.Value;
-        if (form.averageHeightMm.HasValue)
-            averageHeightMm = form.averageHeightMm.Value;
-        if (form.minHeightMm.HasValue)
-            minHeightMm = form.minHeightMm.Value;
+        maxHeightMm = form.maxHeightMm;
+        averageHeightMm = form.averageHeightMm;
+        minHeightMm = form.minHeightMm;
 
         if (form.priceRub.HasValue)
             priceRub = form.priceRub.Value;
@@ -98,6 +108,10 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
             priceBeforeSaleRub = form.priceBeforeSaleRub.Value;
         if (form.minimalPriceRub.HasValue)
             minimalPriceRub = form.minimalPriceRub.Value;
+
+        integrity = form.integrity ?? Integrity.Solid;
+        if (form.quantity.HasValue)
+            quantity = form.quantity.Value;
 
         return true;
     }
@@ -108,7 +122,9 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         {
             Id,
 
+            isActive,
             name,
+            series,
             scale,
             color,
             weightGr,
@@ -123,11 +139,15 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
 
             priceRub,
             priceBeforeSaleRub,
-            minimalPriceRub
+            minimalPriceRub,
+
+            integrity,
+            quantity
         };
     }
 
     public const int FIGURINE_VARIATION_NAME_MAX_LENGTH = 50;
+    public const int FIGURINE_VARIATION_SERIES_MAX_LENGTH = 50;
     public const int FIGURINE_VARIATION_WEIGHT_GR_MAX = 10000; // 10Kg
     public const int FIGURINE_VARIATION_WEIGHT_GR_MIN = 1;
 
@@ -136,6 +156,9 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
 
     public const ulong FIGURINE_VARIATION_PRICE_RUB_MAX = 100000000; // 100m rubs
     public const ulong FIGURINE_VARIATION_PRICE_RUB_MIN = 10;
+
+    public const ulong FIGURINE_VARIATION_QUANTITY_MAX = 1000;
+    public const ulong FIGURINE_VARIATION_QUANTITY_MIN = 1;
 
     public struct AddForm
     {
@@ -151,8 +174,11 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
 
     public struct UserAddForm
     {
+        public bool? isActive { get; set; }
         [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
         public string name { get; set; }
+        [StringLength(FIGURINE_VARIATION_SERIES_MAX_LENGTH)]
+        public string? series { get; set; }
         public Scale? scale { get; set; }
         public Color color { get; set; }
         [Range(FIGURINE_VARIATION_WEIGHT_GR_MIN, FIGURINE_VARIATION_WEIGHT_GR_MAX)]
@@ -178,14 +204,21 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         public ulong priceBeforeSaleRub { get; set; }
         [Range(FIGURINE_VARIATION_PRICE_RUB_MIN, FIGURINE_VARIATION_PRICE_RUB_MAX)]
         public ulong minimalPriceRub { get; set; }
+
+        public Integrity integrity { get; set; }
+        [Range(FIGURINE_VARIATION_QUANTITY_MIN, FIGURINE_VARIATION_QUANTITY_MAX)]
+        public uint quantity { get; set; }
     }
 
     public struct UpdateForm
     {
         public int id { get; set; }
 
+        public bool? isActive { get; set; }
         [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
         public string? name { get; set; }
+        [StringLength(FIGURINE_VARIATION_SERIES_MAX_LENGTH)]
+        public string? series { get; set; }
         public Scale? scale { get; set; }
         public Color? color { get; set; }
         [Range(FIGURINE_VARIATION_WEIGHT_GR_MIN, FIGURINE_VARIATION_WEIGHT_GR_MAX)]
@@ -211,5 +244,9 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         public ulong? priceBeforeSaleRub { get; set; }
         [Range(FIGURINE_VARIATION_PRICE_RUB_MIN, FIGURINE_VARIATION_PRICE_RUB_MAX)]
         public ulong? minimalPriceRub { get; set; }
+
+        public Integrity? integrity { get; set; }
+        [Range(FIGURINE_VARIATION_QUANTITY_MIN, FIGURINE_VARIATION_QUANTITY_MAX)]
+        public uint? quantity { get; set; }
     }
 }

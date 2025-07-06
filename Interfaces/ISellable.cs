@@ -1,3 +1,5 @@
+namespace PrintO.Interfaces;
+
 public interface ISellable
 {
     public ulong priceRub { get; set; }

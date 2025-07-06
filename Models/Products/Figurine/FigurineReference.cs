@@ -1,3 +1,4 @@
+using PrintO.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data.Attributes;
@@ -5,7 +6,7 @@ using Zorro.Data.Interfaces;
 
 namespace PrintO.Models.Products.Figurine;
 
-public class FigurineReference : IEntity, IDataTransferObject<object>, IAddable<FigurineReference.AddForm>
+public class FigurineReference : IEntity, IProductReference<FigurineVariation>, IDataTransferObject<object>, IAddable<FigurineReference.AddForm>
 {
     [Key]
     public int Id { get; set; }
