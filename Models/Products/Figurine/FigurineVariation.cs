@@ -20,15 +20,13 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
 
     [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
     public string name { get; set; } = null!;
-    [StringLength(FIGURINE_VARIATION_SERIES_MAX_LENGTH)]
-    public string? series { get; set; }
     public Scale? scale { get; set; }
     public Color color { get; set; }
     [Range(FIGURINE_VARIATION_WEIGHT_GR_MIN, FIGURINE_VARIATION_WEIGHT_GR_MAX)]
     public uint weightGr { get; set; }
 
     [Range(FIGURINE_VARIATION_DIMENSION_MM_MIN, FIGURINE_VARIATION_DIMENSION_MM_MAX)]
-    public uint heightMm { get; set; }
+    public uint? heightMm { get; set; }
     [Range(FIGURINE_VARIATION_DIMENSION_MM_MIN, FIGURINE_VARIATION_DIMENSION_MM_MAX)]
     public uint? widthMm { get; set; }
     [Range(FIGURINE_VARIATION_DIMENSION_MM_MIN, FIGURINE_VARIATION_DIMENSION_MM_MAX)]
@@ -58,7 +56,6 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         figurineId = form.figurineId;
 
         name = form.addForm.name;
-        series = form.addForm.series;
         scale = form.addForm.scale;
         color = form.addForm.color;
         weightGr = form.addForm.weightGr;
@@ -87,7 +84,6 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
             isActive = form.isActive.Value;
         if (!string.IsNullOrEmpty(form.name))
             name = form.name;
-        series = form.series;
         scale = form.scale;
         if (form.color.HasValue)
             color = form.color.Value;
@@ -124,7 +120,6 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
 
             isActive,
             name,
-            series,
             scale,
             color,
             weightGr,
@@ -147,7 +142,6 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
     }
 
     public const int FIGURINE_VARIATION_NAME_MAX_LENGTH = 50;
-    public const int FIGURINE_VARIATION_SERIES_MAX_LENGTH = 50;
     public const int FIGURINE_VARIATION_WEIGHT_GR_MAX = 10000; // 10Kg
     public const int FIGURINE_VARIATION_WEIGHT_GR_MIN = 1;
 
@@ -177,15 +171,13 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         public bool? isActive { get; set; }
         [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
         public string name { get; set; }
-        [StringLength(FIGURINE_VARIATION_SERIES_MAX_LENGTH)]
-        public string? series { get; set; }
         public Scale? scale { get; set; }
         public Color color { get; set; }
         [Range(FIGURINE_VARIATION_WEIGHT_GR_MIN, FIGURINE_VARIATION_WEIGHT_GR_MAX)]
         public uint weightGr { get; set; }
 
         [Range(FIGURINE_VARIATION_DIMENSION_MM_MIN, FIGURINE_VARIATION_DIMENSION_MM_MAX)]
-        public uint heightMm { get; set; }
+        public uint? heightMm { get; set; }
         [Range(FIGURINE_VARIATION_DIMENSION_MM_MIN, FIGURINE_VARIATION_DIMENSION_MM_MAX)]
         public uint? widthMm { get; set; }
         [Range(FIGURINE_VARIATION_DIMENSION_MM_MIN, FIGURINE_VARIATION_DIMENSION_MM_MAX)]
@@ -217,8 +209,6 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         public bool? isActive { get; set; }
         [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
         public string? name { get; set; }
-        [StringLength(FIGURINE_VARIATION_SERIES_MAX_LENGTH)]
-        public string? series { get; set; }
         public Scale? scale { get; set; }
         public Color? color { get; set; }
         [Range(FIGURINE_VARIATION_WEIGHT_GR_MIN, FIGURINE_VARIATION_WEIGHT_GR_MAX)]

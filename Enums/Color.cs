@@ -1,5 +1,5 @@
-public enum Color
+public enum Color : int
 {
-    Gray,
-    White
+    Gray = 0,
+    White = 1
 }

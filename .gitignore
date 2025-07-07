@@ -30,3 +30,4 @@ nupkg/
 *.nupkg
 
 appsettings.json
+products.json

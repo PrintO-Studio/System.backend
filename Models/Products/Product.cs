@@ -15,7 +15,8 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
     public string SKU { get; set; } = null!;
     [StringLength(PRODUCT_NAME_MAX_LENGTH, MinimumLength = 1)]
     public string name { get; set; } = null!;
-
+    [StringLength(PRODUCT_SERIES_MAX_LENGTH)]
+    public string? series { get; set; }
     [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
     public string description { get; set; } = null!;
 
@@ -39,6 +40,7 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
     {
         SKU = form.userAddForm.SKU;
         name = form.userAddForm.name;
+        series = form.userAddForm.series;
         description = form.userAddForm.description;
         storeId = form.storeId;
 
@@ -49,6 +51,7 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
     {
         if (!string.IsNullOrEmpty(form.name))
             name = form.name;
+        series = form.series;
         if (!string.IsNullOrEmpty(form.description))
             description = form.description;
 
@@ -79,6 +82,7 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
             Id,
             SKU,
             name,
+            series,
             description,
             store = store?.MapToDTO(),
             files,
@@ -96,6 +100,7 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
     public const int PRODUCT_SKU_MAX_LENGTH = 20;
     public const int PRODUCT_NAME_MAX_LENGTH = 100;
     public const int PRODUCT_DESCRIPTION_MAX_LENGTH = 5000;
+    public const int PRODUCT_SERIES_MAX_LENGTH = 50;
 
     public struct AddForm
     {
@@ -115,6 +120,8 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
         public string SKU { get; set; }
         [StringLength(PRODUCT_NAME_MAX_LENGTH, MinimumLength = 1)]
         public string name { get; set; }
+        [StringLength(PRODUCT_SERIES_MAX_LENGTH)]
+        public string? series { get; set; }
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string description { get; set; }
     }
@@ -123,6 +130,8 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
     {
         [StringLength(PRODUCT_NAME_MAX_LENGTH, MinimumLength = 1)]
         public string? name { get; set; }
+        [StringLength(PRODUCT_SERIES_MAX_LENGTH)]
+        public string? series { get; set; }
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string? description { get; set; }
     }

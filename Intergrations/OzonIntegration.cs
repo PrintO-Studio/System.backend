@@ -1,6 +1,9 @@
-﻿using PrintO.Intergrations.Interfaces;
+﻿using Minio.DataModel.Args;
+using PrintO.Intergrations.Interfaces;
+using PrintO.Models;
 using PrintO.Models.Products;
 using PrintO.Models.Products.Figurine;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using Zorro.Data;
@@ -17,10 +20,16 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
     private readonly ModelRepository<Product> _productRepo;
     private readonly ModelRepository<FigurineReference> _fRefRepo;
     private readonly ModelRepository<FigurineVariation> _fVarRepo;
+    private readonly ModelRepository<Models.File> _fFileRepo;
+    private readonly ModelRepository<ImageReference> _fImageRepo;
+    private readonly MinIORepository _minIORepo;
 
     public OzonIntegration(ModelRepository<Product> productRepo,
         ModelRepository<FigurineReference> fRefRepo,
-        ModelRepository<FigurineVariation> fVarRepo)
+        ModelRepository<FigurineVariation> fVarRepo,
+        ModelRepository<Models.File> fFileRepo,
+        ModelRepository<ImageReference> fImageRepo,
+        MinIORepository minIORepo)
     {
         string API_KEY = GetSecretValue("/OZON", "API_KEY");
         string CLIENT_ID = GetSecretValue("/OZON", "CLIENT_ID");
@@ -35,6 +44,9 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         _productRepo = productRepo;
         _fRefRepo = fRefRepo;
         _fVarRepo = fVarRepo;
+        _fFileRepo = fFileRepo;
+        _fImageRepo = fImageRepo;
+        _minIORepo = minIORepo;
     }
 
     private string[] SKUs;
@@ -83,6 +95,129 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         var response = await client.PostAsync(url, content);
         return await response.Content.ReadAsStringAsync();
     }
+
+    /*
+    public async Task UploadProductsAsync()
+    {
+        List<SheetProduct> products = JsonSerializer.Deserialize<SheetProduct[]>(System.IO.File.ReadAllText("./products.json", Encoding.UTF8))!.ToList();
+
+        if (products is null)
+            throw new Exception();
+
+        string description = System.IO.File.ReadAllText("./description.txt", Encoding.UTF8);
+
+        List<string> SKUsToSkip = new();
+
+        int fCounter = 10000000;
+
+        foreach (SheetProduct sheetProduct in products)
+        {
+            if (SKUsToSkip.Contains(sheetProduct.SKU))
+                continue;
+
+            string productImagesDir = $"./images/{sheetProduct.SKU}";
+            int imageCounter = 0;
+            Directory.CreateDirectory(productImagesDir);
+            foreach (string image in product.images)
+            {
+                string path = $"{productImagesDir}/{++imageCounter}.jpg";
+                if (File.Exists(path))
+                {
+                    //Console.WriteLine($"[SKIP]: {path}");
+                    continue;
+                }
+
+                try
+                {
+                    using var client = new HttpClient();
+                    client.Timeout = TimeSpan.FromSeconds(10);
+                    using var stream = await client.GetStreamAsync(image);
+                    using var filestream = new FileStream(path, FileMode.OpenOrCreate);
+                    await stream.CopyToAsync(filestream);
+                    Console.WriteLine($"[SUCCESS]: {path}");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[ERROR]: {path} ({e.Message})");
+                }
+            }
+
+            Product product = new Product();
+            Product.UserAddForm pUserAdd = new();
+            pUserAdd.SKU = sheetProduct.SKU;
+            pUserAdd.name = GetName(sheetProduct);
+            pUserAdd.series = sheetProduct.series;
+            pUserAdd.description = description;
+            Product.AddForm pAdd = new(pUserAdd, 1);
+            product.AddFill(pAdd);
+            int pId = _productRepo.Add(product)!.Id;
+
+            FigurineReference figurine = new FigurineReference();
+            FigurineReference.AddForm fAdd = new(pId);
+            figurine.AddFill(fAdd);
+            int fId = _fRefRepo.Add(figurine)!.Id;
+
+            List<SheetProduct> same = products.FindAll(p => GetName(p) == pUserAdd.name && p.series == pUserAdd.series);
+            SKUsToSkip.AddRange(same.Select(s => s.SKU));
+
+            //AddVariattion(sheetProduct);
+            same.ForEach(s => AddVariattion(s));
+
+            var images = Directory.GetFiles(productImagesDir, "*.jpg").ToList();
+            int imageCounter = 0;
+            images.ForEach(i => AddImage(i));
+
+            void AddImage(string path)
+            {
+                string fileName = Path.GetFileName(path);
+                string filePath = $"1/{pId}/{fCounter++}/{fileName}";
+
+                using var fileStream = new FileStream(path, FileMode.Open);
+                _minIORepo.UploadAsync(fileStream, filePath, "image/jpeg");
+                Models.File file = new Models.File();
+                Models.File.AddForm fAdd = new Models.File.AddForm(filePath, 1, pId, "image/jpeg", fileStream.Length);
+                file.AddFill(fAdd);
+                int fId = _fFileRepo.Add(file)!.Id;
+
+                ImageReference image = new();
+                ImageReference.AddForm iAdd = new ImageReference.AddForm(fId, pId, imageCounter++);
+                image.AddFill(iAdd);
+                int iId = _fImageRepo.Add(image)!.Id;
+            }
+
+            void AddVariattion(SheetProduct p)
+            {
+                FigurineVariation variation = new();
+                FigurineVariation.UserAddForm vUserAdd = new();
+                vUserAdd.isActive = true;
+                vUserAdd.name = p.colorName ?? GetName(p);
+                vUserAdd.color = p.color ?? Color.Gray;
+                vUserAdd.weightGr = (uint)p.weight.GetValueOrDefault(50);
+                vUserAdd.heightMm = (uint?)p.height;
+                vUserAdd.widthMm = (uint?)p.width;
+                vUserAdd.depthMm = (uint?)p.depth;
+                ulong priceRounded = (ulong)MathF.Round(p.price / 50f) * 50,
+                    oldPriceRounded = (ulong)MathF.Round((priceRounded * 1.4f) / 100f) * 100 - 1;
+                vUserAdd.priceRub = priceRounded;
+                vUserAdd.priceBeforeSaleRub = oldPriceRounded;
+                vUserAdd.minimalPriceRub = priceRounded - 150;
+                vUserAdd.integrity = p.integrity;
+                vUserAdd.quantity = (uint)p.quantity;
+                FigurineVariation.AddForm vAdd = new(vUserAdd, fId);
+                variation.AddFill(vAdd);
+                int vId = _fVarRepo.Add(variation)!.Id;
+            }
+
+            string GetName(SheetProduct product)
+            {
+                if (string.IsNullOrEmpty(product.suffix) is false)
+                    return $"{product.name} / {product.suffix}";
+                else
+                    return product.name;
+            }
+        }
+    }
+    */
 
     /*
     public void PullSheetData()
@@ -257,6 +392,7 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
     }
     */
 
+    /*
     public class SheetProduct
     {
         public string SKU { get; set; }
@@ -278,4 +414,5 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         public string? colorName { get; set; }
         public string[] images { get; set; }
     }
+    */
 }
