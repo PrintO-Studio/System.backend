@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrintO;
 
@@ -11,9 +12,11 @@ using PrintO;
 namespace PrintOSystem.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250707122133_Figurine_variation_height")]
+    partial class Figurine_variation_height
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -253,6 +256,10 @@ namespace PrintOSystem.Migrations
                     b.Property<int?>("scale")
                         .HasColumnType("int");
 
+                    b.Property<string>("series")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
                     b.Property<uint>("weightGr")
                         .HasColumnType("int unsigned");
 
@@ -294,10 +301,6 @@ namespace PrintOSystem.Migrations
 
                     b.Property<uint>("productVersion")
                         .HasColumnType("int unsigned");
-
-                    b.Property<string>("series")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("storeId")
                         .HasColumnType("int");

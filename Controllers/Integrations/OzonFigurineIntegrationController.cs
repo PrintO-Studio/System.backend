@@ -19,22 +19,4 @@ public class OzonFigurineIntegrationController : IntegrationController<OzonInteg
     {
         return Ok(_integration.GetProductSKUListing());
     }
-
-    [HttpPost]
-    [Route("integrations/ozon/products/")]
-    public IActionResult PostProducts(string[] SKUs)
-    {
-        return Ok();
-    }
-
-    /*
-    [HttpPost]
-    [Route("integrations/ozon/pull-sheet-products")]
-    public IActionResult PostPullSheetProducts (string[] SKUs)
-    {
-        _integration.PullSheetData();
-
-        return Ok();
-    }
-    */
 }
