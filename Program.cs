@@ -120,6 +120,9 @@ app.UseAuthorization();
 app.MapControllers();
 app.UseCors();
 
-ZorroDI.application.UseSwagger().UseSwaggerUI();
+if (ZorroDI.environment != Zorro.Enums.Environment.Production)
+{
+    ZorroDI.application.UseSwagger().UseSwaggerUI();
+}
 
 ZorroDI.Run(port: 5000);
