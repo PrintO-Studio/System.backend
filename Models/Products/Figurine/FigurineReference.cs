@@ -31,7 +31,7 @@ public class FigurineReference : IEntity, IProductReference<FigurineVariation>, 
         return new
         {
             Id,
-            product = product.MapToDTO(argsObject),
+            product = ((IDataTransferObject<object>)product).MapToDTO(argsObject),
             variations = variations.Select(v => v.MapToDTO()),
         };
     }

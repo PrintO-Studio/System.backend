@@ -3,10 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data;
 using Zorro.Data.Attributes;
 using Zorro.Data.Interfaces;
+using static PrintO.Models.Products.Product;
 
 namespace PrintO.Models.Products;
 
-public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.AddForm>, IUpdateable<Product.UpdateForm>
+public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject<ProductReviewDTO>, IAddable<Product.AddForm>, IUpdateable<Product.UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -30,6 +31,8 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
     public virtual ICollection<File> files { get; set; } = new List<File>();
     [IncludeWhen("INCLUDE_IMAGES")]
     public virtual ICollection<ImageReference> images { get; set; } = new List<ImageReference>();
+    [IncludeWhen("INCLUDE_NOTES")]
+    public virtual ICollection<Note> notes { get; set; } = new List<Note>();
 
     public uint productVersion { get; set; } = 1;
     public uint? ozonIntegrationVersion { get; set; }
@@ -60,7 +63,7 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
         return true;
     }
 
-    public object MapToDTO(dynamic? argsObject = null)
+    object IDataTransferObject<object>.MapToDTO(dynamic? argsObject)
     {
         IEnumerable<object>? files = null;
         if (argsObject is not null && argsObject.minIORepo is not null)
@@ -87,6 +90,43 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
             store = store?.MapToDTO(),
             files,
             images = images.OrderBy(i => i.index).Select(i => i.MapToDTO()),
+            versions = new
+            {
+                productVersion,
+                ozonIntegrationVersion,
+                wildberriesIntegrationVersion,
+                yandexIntegrationVersion
+            },
+            notes = notes.Select(n => n.MapToDTO()),
+        };
+    }
+
+    ProductReviewDTO IDataTransferObject<ProductReviewDTO>.MapToDTO(dynamic? argsObject)
+    {
+        MinIORepository? minIORepo = argsObject!.minIORepo;
+
+        ImageReference? primaryImageRef = images.FirstOrDefault();
+        object? primaryImage = null;
+        if (primaryImageRef is not null)
+        {
+            var primaryImageFile = files.FirstOrDefault(f => f.Id == primaryImageRef.fileId);
+
+            if (primaryImageFile is not null)
+            {
+                primaryImage = primaryImageFile.MapToDTO(new
+                {
+                    fullPath = minIORepo.GetFullPath(primaryImageFile.filePath)
+                });
+            }
+        }
+
+        return new ProductReviewDTO()
+        {
+            id = Id,
+            SKU = SKU,
+            name = name,
+            series = series,
+            primaryImage = primaryImage,
             versions = new
             {
                 productVersion,
@@ -134,5 +174,15 @@ public class Product : IEntity, IDataTransferObject<object>, IAddable<Product.Ad
         public string? series { get; set; }
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string? description { get; set; }
+    }
+
+    public struct ProductReviewDTO
+    {
+        public int id { get; set; }
+        public string SKU { get; set; }
+        public string name { get; set; }
+        public string? series { get; set; }
+        public object? primaryImage { get; set; }
+        public object? versions { get; set; }
     }
 }

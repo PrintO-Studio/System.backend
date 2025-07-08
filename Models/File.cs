@@ -1,3 +1,4 @@
+using PrintO.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data.Attributes;
@@ -28,6 +29,9 @@ public class File : IEntity, IDataTransferObject<object>, IAddable<AddForm>
     public string contentType { get; set; } = null!;
     public long length { get; set; }
 
+    [IncludeWhen("INCLUDE_TAGS")]
+    public virtual ICollection<FileTag> tags { get; set; } = new List<FileTag>();
+
     public bool AddFill(AddForm form)
     {
         filePath = form.filePath;
@@ -49,7 +53,8 @@ public class File : IEntity, IDataTransferObject<object>, IAddable<AddForm>
             uploadDateTime,
             argsObject?.fullPath,
             contentType,
-            length
+            length,
+            tags = tags.Select(t => t.MapToDTO()),
         };
     }
 

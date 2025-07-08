@@ -43,9 +43,9 @@ public class ProductController : Controller
 
         .SwitchTo(qualifiedProducts)
 
-        .MapToDTOs<Product, object>(p => new { minIORepo })
+        .MapToDTOs<Product, Product.ProductReviewDTO>(p => new { minIORepo })
 
-        .PaginateAndWrap(startIndex, pageSize)
+        .PaginateAndWrap(startIndex, pageSize, true)
 
         .EndAndReturn();
     }

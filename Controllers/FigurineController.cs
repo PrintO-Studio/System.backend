@@ -35,13 +35,16 @@ public class FigurineController : Controller
 
         .SetInclusion("INCLUDE_VARIATIONS")
 
+        .SetInclusion("INCLUDE_NOTES")
+
+        .SetInclusion("INCLUDE_TAGS")
+
         .Find<FigurineReference>(f => f.product.storeId == selectedStoreId && f.productId == productId)
 
         .MapToDTO<FigurineReference, object>(new { minIORepo })
 
         .EndAndReturn();
     }
-
 
     [HttpPost]
     [Route("products/figurines")]
