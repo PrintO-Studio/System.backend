@@ -7,7 +7,7 @@ using static PrintO.Models.Products.Product;
 
 namespace PrintO.Models.Products;
 
-public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject<ProductReviewDTO>, IAddable<Product.AddForm>, IUpdateable<Product.UpdateForm>
+public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject<ProductReviewDTO>, IAddable<Product.AddForm>, IUpdateable<Product.UpdateForm>, IUpdateable<OzonVersionBumpUpdate>
 {
     [Key]
     public int Id { get; set; }
@@ -20,6 +20,7 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
     public string? series { get; set; }
     [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
     public string description { get; set; } = null!;
+    public bool explicitContent { get; set; } = false;
 
     [ForeignKey(nameof(store))]
     public int storeId { get; set; }
@@ -46,6 +47,7 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         series = form.userAddForm.series;
         description = form.userAddForm.description;
         storeId = form.storeId;
+        explicitContent = form.userAddForm.explicitContent ?? false;
 
         return true;
     }
@@ -57,8 +59,17 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         series = form.series;
         if (!string.IsNullOrEmpty(form.description))
             description = form.description;
+        if (form.explicitContent.HasValue)
+            explicitContent = form.explicitContent.Value;
 
         productVersion++;
+
+        return true;
+    }
+
+    public bool UpdateFill(OzonVersionBumpUpdate form)
+    {
+        ozonIntegrationVersion = productVersion;
 
         return true;
     }
@@ -88,6 +99,7 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
             series,
             description,
             store = store?.MapToDTO(),
+            explicitContent,
             files,
             images = images.OrderBy(i => i.index).Select(i => i.MapToDTO()),
             versions = new
@@ -105,7 +117,7 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
     {
         MinIORepository? minIORepo = argsObject!.minIORepo;
 
-        ImageReference? primaryImageRef = images.FirstOrDefault();
+        ImageReference? primaryImageRef = images.OrderBy(i => i.index).FirstOrDefault();
         object? primaryImage = null;
         if (primaryImageRef is not null)
         {
@@ -164,6 +176,7 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         public string? series { get; set; }
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string description { get; set; }
+        public bool? explicitContent { get; set; }
     }
 
     public struct UpdateForm
@@ -174,7 +187,10 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         public string? series { get; set; }
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string? description { get; set; }
+        public bool? explicitContent { get; set; }
     }
+
+    public struct OzonVersionBumpUpdate { }
 
     public struct ProductReviewDTO
     {

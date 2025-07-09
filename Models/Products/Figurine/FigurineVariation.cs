@@ -18,6 +18,7 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
     public FigurineReference figurine { get; set; } = null!;
 
     public bool isActive { get; set; } = true;
+    public string separateSKU { get; set; } = null!;
 
     [StringLength(FIGURINE_VARIATION_NAME_MAX_LENGTH)]
     public string name { get; set; } = null!;
@@ -54,6 +55,7 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
     public bool AddFill(AddForm form)
     {
         isActive = form.addForm.isActive ?? true;
+        separateSKU = form.separateSKU;
         figurineId = form.figurineId;
 
         name = form.addForm.name;
@@ -120,6 +122,7 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
             Id,
 
             isActive,
+            SKU = separateSKU,
             name,
             scale,
             color,
@@ -159,11 +162,13 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
     {
         public UserAddForm addForm { get; set; }
         public int figurineId { get; set; }
+        public string separateSKU { get; set; }
 
-        public AddForm(UserAddForm addForm, int figurineId)
+        public AddForm(UserAddForm addForm, int figurineId, string separateSKU)
         {
             this.addForm = addForm;
             this.figurineId = figurineId;
+            this.separateSKU = separateSKU;
         }
     }
 

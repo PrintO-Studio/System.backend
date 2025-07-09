@@ -1,13 +1,18 @@
-﻿using Minio.DataModel.Args;
+﻿using Dumpify;
 using PrintO.Intergrations.Interfaces;
 using PrintO.Models;
 using PrintO.Models.Products;
 using PrintO.Models.Products.Figurine;
-using System.Net;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using Zorro.Data;
+using Zorro.Middlewares;
 using static Zorro.Secrets.GetSecretValueUtility;
+
+using CATEGORY = (int CATEGORY_ID, int TYPE_ID);
 
 namespace PrintO.Intergrations;
 
@@ -16,6 +21,9 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
     protected HttpClient client { get; init; }
 
     public const string BASE_ADDRESS = "https://api-seller.ozon.ru/";
+
+    static readonly CATEGORY FIGURINE_CATEGORY = (17028973, 115944384);
+    static readonly CATEGORY TABLE_GAME_ACCESSORY_CATEGORY = (88076545, 92885);
 
     private readonly ModelRepository<Product> _productRepo;
     private readonly ModelRepository<FigurineReference> _fRefRepo;
@@ -39,8 +47,6 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         client.DefaultRequestHeaders.Add("Client-Id", CLIENT_ID);
         client.BaseAddress = new Uri(BASE_ADDRESS);
 
-        SKUs = GetProductSKUListing();
-
         _productRepo = productRepo;
         _fRefRepo = fRefRepo;
         _fVarRepo = fVarRepo;
@@ -49,51 +55,532 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         _minIORepo = minIORepo;
     }
 
-    private string[] SKUs;
-    public string[] GetProductSKUListing()
+    public object UploadFigurine(FigurineReference figurine)
     {
-        string jsonRequest = "{" +
-            "\"filter\": {" +
-            "   \"visibility\": " +
-            "   \"ALL\"}," +
-            "   \"last_id\": \"\"," +
-            "   \"limit\": 1000" +
-            "}";
-
-        var postTask = POSTAsync("/v3/product/list", jsonRequest);
-        string resultRaw = postTask.GetAwaiter().GetResult();
-
-        using JsonDocument doc = JsonDocument.Parse(resultRaw);
-
-        if (!doc.RootElement.TryGetProperty("result", out JsonElement resultElement))
-            throw new Exception("No 'result' property in response.");
-
-        if (!resultElement.TryGetProperty("items", out JsonElement itemsElement))
-            throw new Exception("No 'items' property in 'result'.");
-
-        List<string> offerIds = new List<string>();
-
-        foreach (JsonElement item in itemsElement.EnumerateArray())
-        {
-            if (item.TryGetProperty("offer_id", out JsonElement offerIdElement))
+        var images = figurine.product.images
+            .OrderBy(i => i.index)
+            .Select(i =>
             {
-                offerIds.Add(offerIdElement.GetString()!);
+                var file = figurine.product.files.FirstOrDefault(f => f.Id == i.fileId);
+                if (file is null)
+                    throw new Exception("File not found.");
+                return _minIORepo.GetFullPath(file.filePath);
+            })
+            .ToList();
+
+        var primaryImage = images.FirstOrDefault();
+        var otherImages = images[1..];
+
+        List<object> items = new List<object>();
+
+        foreach (FigurineVariation variation in figurine.variations)
+        {
+            if (variation.isActive is false)
+                continue;
+
+            string variationSKU = variation.separateSKU;
+            CATEGORY selectedCategory = FIGURINE_CATEGORY;
+
+            object pullRequest = new
+            {
+                filter = new
+                {
+                    offer_id = new[] { variationSKU },
+                    visibility = "ALL"
+                },
+                limit = 1,
+                sort_dir = "ASC"
+            };
+
+            bool isNewVariation = false;
+            try
+            {
+                var pullTask = POSTAsync("/v4/product/info/attributes", JsonSerializer.Serialize(pullRequest));
+                string pullResponseJson = pullTask.GetAwaiter().GetResult();
+                using JsonDocument pullDoc = JsonDocument.Parse(pullResponseJson);
+
+                if (isNewVariation is false)
+                {
+                    if (!pullDoc.RootElement.TryGetProperty("result", out JsonElement pullResultElement))
+                        throw new Exception("No 'result' property in response.");
+
+                    var pullCategory = pullResultElement.EnumerateArray().FirstOrDefault().GetProperty("description_category_id").GetInt64();
+                    if (pullCategory == FIGURINE_CATEGORY.CATEGORY_ID)
+                        selectedCategory = FIGURINE_CATEGORY;
+                    else if (pullCategory == TABLE_GAME_ACCESSORY_CATEGORY.CATEGORY_ID)
+                        selectedCategory = TABLE_GAME_ACCESSORY_CATEGORY;
+                }
             }
+            catch (QueryException ex)
+            {
+                isNewVariation = true;
+                /*
+                if (pullDoc.RootElement.TryGetProperty("code", out JsonElement errorCodeElement))
+                {
+                    int errorCode = errorCodeElement.GetInt32();
+                    if (errorCode == 5)
+                    else
+                        throw new QueryException($"Unexpected error code from ozon API - error code: {errorCode}");
+                }
+                */
+            }
+
+            var volume = GetPackageVolume(variation);
+            string? scaleLabel = variation.scale?.ToString().Replace("oneTo", "1:");
+
+            string nameFormat = figurine.product.name + " - " + figurine.product.series + " ({0}{1})";
+            string name = nameFormat;
+            if (variation.heightMm.HasValue)
+                name = name.Replace("{0}", $"{variation.heightMm}мм ");
+            else
+                name = name.Replace("{0}", string.Empty);
+            if (variation.scale.HasValue)
+                name = name.Replace("{1}", $"в масштабе {scaleLabel}");
+            else
+                name = name.Replace("{1}", string.Empty);
+            name = name.Replace("( )", string.Empty);
+            name = name.Replace(" )", ")");
+
+            string? seriesTag = figurine.product.series?.Replace(' ', '_');
+            string hashtags = $"#3D #Миниатюры #Фигурки #Миниатюра #Фигурка";
+            string tags = $"printo;printo.studio;3d;миниатюры;фигурки;фигурка;миниатюра;печать;игры;аниме";
+            if (!string.IsNullOrEmpty(seriesTag))
+            {
+                hashtags = hashtags.Insert(0, $"#{seriesTag} ");
+                tags = tags.Insert(0, $"{seriesTag};");
+            }
+
+            string description = figurine.product.description;
+            description += "\n\n🔍 Характеристики товара:\n";
+            description += $"\t🎨 Цвет:\t{(variation.color == Enums.Color.Gray ? "серый" : "белый")}\n";
+            if (variation.scale.HasValue)
+            {
+                description += $"\t📐 Масштаб:\t{scaleLabel}\n";
+            }
+            {
+                description += $"\t🧱 Целостность:\t";
+                if (variation.integrity == Enums.Integrity.Solid)
+                    description += "Миниатюра доставляется цельной";
+                else if (variation.integrity == Enums.Integrity.Dismountable)
+                    description += "Миниатюра доставляется в разборе";
+                else if (variation.integrity == Enums.Integrity.DismountableBase)
+                    description += "Подставка отсоединяется от миниатюры";
+                description += $"\n";
+            }
+            description += $"\t🧍 Количество фигурок:\t{variation.quantity}\n";
+            description += $"\t⚖️ Вес фигурки:\t{variation.weightGr} гр.\n";
+            if (variation.heightMm.HasValue)
+                description += $"\t📏 Высота фигурки:\t\t\t{variation.heightMm} мм.\n";
+            if (variation.widthMm.HasValue)
+                description += $"\t📏 Ширина фигурки:\t\t\t{variation.widthMm} мм.\n";
+            if (variation.depthMm.HasValue)
+                description += $"\t📏 Длина фигурки:\t\t\t{variation.depthMm} мм.\n";
+            if (variation.minHeightMm.HasValue)
+                description += $"\t↘️ Минимальная высота:\t\t\t{variation.minHeightMm} мм.\n";
+            if (variation.averageHeightMm.HasValue)
+                description += $"\t📊 Средняя высота:\t\t\t{variation.averageHeightMm} мм.\n";
+            if (variation.maxHeightMm.HasValue)
+                description += $"\t⬆️ Максимальная высота:\t\t\t{variation.maxHeightMm} мм.\n";
+
+            List<object?> attributes = new()
+            {
+                // Бренд
+                new {
+                    id = 85,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = "Нет бренда"
+                        }
+                    }
+                },
+                // Название модели (для объединения в одну карточку)
+                new
+                {
+                    id = 9048,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = string.IsNullOrEmpty(figurine.product.series) ? name : figurine.product.series
+                        }
+                    }
+                },
+                // Признак 18+
+                new
+                {
+                    id = 9070,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = figurine.product.explicitContent.ToString()
+                        }
+                    }
+                },
+                // #Хештеги
+                new
+                {
+                    id = 23171,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = hashtags
+                        }
+                    }
+                },
+                // Аннотация
+                new
+                {
+                    id = 4191,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = description
+                        }
+                    }
+                },
+                // Ключевые слова
+                new
+                {
+                    id = 22336,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = tags
+                        }
+                    }
+                },
+                // Название группы
+                !string.IsNullOrEmpty(figurine.product.series) ? new
+                {
+                    id = 22390,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = figurine.product.series
+                        }
+                    }
+                } : null,
+                // Вид детской фигурки
+                new
+                {
+                    id = 9447,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 290771564,
+                            value = "Статичная"
+                        }
+                    }
+                },
+                // Тематика фигурки
+                new
+                {
+                    id = 7110,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 31289,
+                            value = "Герои и персонажи"
+                        },
+                        new
+                        {
+                            dictionary_value_id = 478434444,
+                            value = "Аниме"
+                        },
+                    }
+                    },
+                // Цвет товара
+                new
+                {
+                    id = 10096,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 61576,
+                            value = variation.color == Enums.Color.Gray ? "серый" : "белый"
+                        }
+                    }
+                },
+                // Название цвета
+                new
+                {
+                    id = 10097,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = variation.name ?? figurine.product.name
+                        }
+                    }
+                },
+                // Высота игрушки, см
+                new
+                {
+                    id = 7147,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = (variation.heightMm / 10f).ToString()
+                        }
+                    }
+                },
+                // Материал
+                new
+                {
+                    id = 4975,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 62090,
+                            value = "Смола"
+                        }
+                    }
+                },
+                // Пол ребенка
+                new
+                {
+                    id = 13216,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 971006037,
+                            value = "Унисекс"
+                        }
+                    }
+                },
+                // Минимальный возраст ребенка
+                new
+                {
+                    id = 13214,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 971006009,
+                            value = "7 лет"
+                        }
+                    }
+                },
+                // Максимальный возраст ребенка
+                new
+                {
+                    id = 13215,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 971005969,
+                            value = "18 лет"
+                        }
+                    }
+                },
+                // Количество фигурок
+                new
+                {
+                    id = 8782,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = variation.quantity.ToString()
+                        }
+                    }
+                },
+                // Количество элементов, шт
+                variation.integrity == Enums.Integrity.Solid ?
+                new
+                {
+                    id = 7188,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = 1.ToString()
+                        }
+                    }
+                } : null,
+                // Страна-изготовитель
+                new
+                {
+                    id = 4389,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 90295,
+                            value = "Россия"
+                        }
+                    }
+                },
+                // Название??
+                new
+                {
+                    id = 4180,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = name
+                        }
+                    }
+                },
+                // Вес с упаковкой, г
+                new
+                {
+                    id = 4497,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = MathF.Round((volume.width * volume.height * volume.depth) / 20000f + variation.weightGr).ToString()
+                        }
+                    }
+                },
+                // Код продавца
+                new
+                {
+                    id = 9024,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            value = variationSKU
+                        }
+                    }
+                },
+                // Целевая аудитория
+                figurine.product.explicitContent ? new
+                {
+                    id = 9390,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 43241,
+                            value = "Взрослая"
+                        }
+                    }
+                } : new
+                {
+                    id = 9390,
+                    complex_id = 0,
+                    values = new[] {
+                        new
+                        {
+                            dictionary_value_id = 43241,
+                            value = "Взрослая"
+                        },
+                        new
+                        {
+                            dictionary_value_id = 43242,
+                            value = "Детская"
+                        },
+                    }
+                },
+            };
+
+            attributes.RemoveAll(a => a is null);
+
+            object item = new
+            {
+                barcode = isNewVariation ? variationSKU : null,
+                description_category_id = selectedCategory.CATEGORY_ID,
+                color_image = primaryImage,
+                currency_code = "RUB",
+                volume.depth,
+                dimension_unit = "mm",
+                volume.height,
+                images = otherImages,
+                name,
+                offer_id = variationSKU,
+                old_price = variation.priceBeforeSaleRub.ToString(),
+                price = variation.priceRub.ToString(),
+                primary_image = primaryImage,
+                type_id = selectedCategory.TYPE_ID,
+                //vat = "0.1",
+                weight = variation.weightGr,
+                weight_unit = "g",
+                volume.width,
+                attributes
+            };
+
+            items.Add(item);
         }
 
-        return offerIds.ToArray();
-    }
+        return UploadFigurine();
 
-    public bool UploadProduct(FigurineReference product)
-    {
-        throw new NotImplementedException();
+        return true;
+
+        (uint width, uint height, uint depth) GetPackageVolume(FigurineVariation variation)
+        {
+            uint? anyBiggestComponent = new[]
+            {
+                variation.widthMm,
+                variation.heightMm,
+                variation.depthMm,
+                variation.maxHeightMm,
+                variation.averageHeightMm,
+                variation.minHeightMm
+            }.Max();
+            uint biggestComponent = anyBiggestComponent ?? 50;
+
+            uint width = (uint)((variation.widthMm ?? biggestComponent) * 1.15f);
+            uint height = (uint)((variation.heightMm ?? biggestComponent) * 1.15f);
+            uint depth = (uint)((variation.depthMm ?? biggestComponent) * 1.15f);
+
+            return (width, height, depth);
+        }
+
+        long UploadFigurine()
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            };
+
+            string json = JsonSerializer.Serialize(new { items }, options);
+
+            //System.IO.File.WriteAllText("./test_upload.json", json, Encoding.UTF8);
+            string response = POSTAsync("/v3/product/import", json).GetAwaiter().GetResult();
+            JsonDocument postDoc = JsonDocument.Parse(response);
+
+            if (!postDoc.RootElement.TryGetProperty("result", out JsonElement postResultElement))
+                throw new Exception("No 'result' property in response.");
+
+            if (!postResultElement.TryGetProperty("task_id", out JsonElement taskIdElement))
+                throw new Exception("No 'items' property in 'result'.");
+
+            return taskIdElement.GetInt64();
+        }
     }
 
     private async Task<string> POSTAsync(string url, string jsonData)
     {
-        var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-        var response = await client.PostAsync(url, content);
-        return await response.Content.ReadAsStringAsync();
+        var requestContent = new StringContent(jsonData, Encoding.UTF8, "application/json");
+        var response = await client.PostAsync(url, requestContent);
+        string responseContent = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode is false)
+        {
+            throw new QueryException(responseContent);
+        }
+        return responseContent;
     }
 
     /*
@@ -107,6 +594,7 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         string description = System.IO.File.ReadAllText("./description.txt", Encoding.UTF8);
 
         List<string> SKUsToSkip = new();
+        List<string> SKUtoShip = new() { "91.2", "127.2", "127.3", "474", "343", "218.65", "218.83", "267.5", "274.1", "274.2", "274.4", "274.5", "274.7", "274.8", "274.9", "274.10", "386", "478.6" };
 
         int fCounter = 10000000;
 
@@ -114,14 +602,15 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
         {
             if (SKUsToSkip.Contains(sheetProduct.SKU))
                 continue;
-
             string productImagesDir = $"./images/{sheetProduct.SKU}";
+
+            //
             int imageCounter = 0;
             Directory.CreateDirectory(productImagesDir);
             foreach (string image in product.images)
             {
                 string path = $"{productImagesDir}/{++imageCounter}.jpg";
-                if (File.Exists(path))
+                if (System.IO.File.Exists(path))
                 {
                     //Console.WriteLine($"[SKIP]: {path}");
                     continue;
@@ -141,6 +630,7 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
                     Console.WriteLine($"[ERROR]: {path} ({e.Message})");
                 }
             }
+            //
 
             Product product = new Product();
             Product.UserAddForm pUserAdd = new();
@@ -158,6 +648,10 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
             int fId = _fRefRepo.Add(figurine)!.Id;
 
             List<SheetProduct> same = products.FindAll(p => GetName(p) == pUserAdd.name && p.series == pUserAdd.series);
+            if (same.RemoveAll(s => SKUtoShip.Contains(s.SKU) && product.SKU != s.SKU) > 0)
+            {
+                SKUtoShip.Add(product.SKU);
+            }
             SKUsToSkip.AddRange(same.Select(s => s.SKU));
 
             //AddVariattion(sheetProduct);
@@ -203,9 +697,10 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
                 vUserAdd.minimalPriceRub = priceRounded - 150;
                 vUserAdd.integrity = p.integrity;
                 vUserAdd.quantity = (uint)p.quantity;
-                FigurineVariation.AddForm vAdd = new(vUserAdd, fId);
+                FigurineVariation.AddForm vAdd = new(vUserAdd, fId, p.SKU);
                 variation.AddFill(vAdd);
                 int vId = _fVarRepo.Add(variation)!.Id;
+                Console.WriteLine($"Added prod SKU:{p.SKU} at variation {vId}");
             }
 
             string GetName(SheetProduct product)

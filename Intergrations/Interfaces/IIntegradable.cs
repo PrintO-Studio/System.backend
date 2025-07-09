@@ -7,5 +7,5 @@ public interface IIntegradable<TProductReference, TVariation>
     where TProductReference : class, IProductReference<TVariation>
     where TVariation : class, ISellable
 {
-    public bool UploadProduct(TProductReference product);
+    public object UploadFigurine(TProductReference product);
 }
