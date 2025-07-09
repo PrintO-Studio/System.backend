@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrintO;
 
@@ -11,9 +12,11 @@ using PrintO;
 namespace PrintOSystem.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250709123345_Figurine_variation_separate_sku")]
+    partial class Figurine_variation_separate_sku
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -339,9 +342,6 @@ namespace PrintOSystem.Migrations
                         .IsRequired()
                         .HasMaxLength(5000)
                         .HasColumnType("varchar(5000)");
-
-                    b.Property<bool>("explicitContent")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("name")
                         .IsRequired()

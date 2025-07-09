@@ -36,7 +36,11 @@ public class ProductController : Controller
         )!
 
         .If(!string.IsNullOrEmpty(searchQuery), _ => _
-             .Eject(_ => _.GetAllWhere<Product>(p => p.storeId == selectedStoreId && (p.name.Contains(searchQuery!) || p.SKU.Contains(searchQuery!))), out var products)
+             .Eject(_ => _.GetAllWhere<Product>(
+                 p => p.storeId == selectedStoreId && 
+                 (p.name.Contains(searchQuery!) || p.SKU.Contains(searchQuery!) ||
+                    (!string.IsNullOrEmpty(p.series) && p.series!.Contains(searchQuery!)))), 
+             out var products)
 
              .Execute(() => qualifiedProducts = products)
         )

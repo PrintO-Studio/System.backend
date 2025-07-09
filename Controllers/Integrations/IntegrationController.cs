@@ -7,7 +7,7 @@ namespace PrintO.Controllers.Integrations;
 
 [ApiController]
 [JwtAuthorize]
-public class IntegrationController<TIntegradable, TProductReference, TVariation> : Controller
+public abstract class IntegrationController<TIntegradable, TProductReference, TVariation> : Controller
     where TIntegradable : IIntegradable<TProductReference, TVariation>
     where TProductReference : class, IProductReference<TVariation>
     where TVariation : class, ISellable
@@ -18,4 +18,6 @@ public class IntegrationController<TIntegradable, TProductReference, TVariation>
     {
         _integration = integration;
     }
+
+    public abstract IActionResult PostUploadFigurine(int id);
 }

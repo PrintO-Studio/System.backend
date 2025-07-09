@@ -62,6 +62,16 @@ public class FigurineController : Controller
                 fields: ("SKU", ["Product with such SKU already exist."])))
         )
 
+        .SetInclusion("INCLUDE_VARIATIONS")
+
+        .GetAllWhere<FigurineReference>(f => f.product.storeId == selectedStoreId && f.variations.Any(v => v.separateSKU == input.product.SKU))
+
+        .If(f => f?.Any() ?? false, _ => _
+            .Throw(new QueryException(
+                statusCode: StatusCodes.Status400BadRequest,
+                fields: ("SKU", ["Figurine variation with such SKU already exist."])))
+        )
+
         .Eject(_ => _.Add<Product, Product.AddForm>(new(input.product, selectedStoreId)), out Product product)
 
         .Eject(new FigurineReference.AddForm(product.Id), out var figurineAdd)
@@ -69,7 +79,9 @@ public class FigurineController : Controller
         .Eject(_ => _.Add<FigurineReference, FigurineReference.AddForm>(figurineAdd), out var figurine)
 
         .ForEach(input.variations, (variationAdd, _) => _
-            .Eject(new FigurineVariation.AddForm(variationAdd, figurine.Id), out var variatonAdd)
+            .GenerateUniqueFigurineVariationSKU(out var separateSKU, product.Id)
+
+            .Eject(new FigurineVariation.AddForm(variationAdd, figurine.Id, separateSKU), out var variatonAdd)
 
             .Add<FigurineVariation, FigurineVariation.AddForm>(variatonAdd)
         )
@@ -103,7 +115,9 @@ public class FigurineController : Controller
 
         .ForEach(input.addVariations, (variationAdd, _) => _
             .Try(_ => _
-                .Eject(new FigurineVariation.AddForm(variationAdd, figurine.Id), out var variatonAdd)
+                .GenerateUniqueFigurineVariationSKU(out var separateSKU, productId)
+
+                .Eject(new FigurineVariation.AddForm(variationAdd, figurine.Id, separateSKU), out var variatonAdd)
 
                 .Add<FigurineVariation, FigurineVariation.AddForm>(variatonAdd)
             )
