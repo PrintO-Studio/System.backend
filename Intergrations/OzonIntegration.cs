@@ -282,35 +282,45 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
 
         string description = figurine.product.description;
         description += "\n\n🔍 Характеристики товара:\n";
-        description += $"\t🎨 Цвет:\t{(variation.color == Enums.Color.Gray ? "серый" : "белый")}\n";
+
+        string AddLine(string label, string value)
+        {
+            int totalLength = 40;
+            string dots = new string('.', Math.Max(1, totalLength - label.Length));
+            return $"{label}{dots}{value}\n";
+        }
+
+        description += AddLine("🎨 Цвет", (variation.color == Enums.Color.Gray ? "серый" : "белый"));
+
         if (variation.scale.HasValue)
+            description += AddLine("📐 Масштаб", scaleLabel!);
+
         {
-            description += $"\t📐 Масштаб:\t{scaleLabel}\n";
+            string integrityText = variation.integrity switch
+            {
+                Enums.Integrity.Solid => "Миниатюра доставляется цельной",
+                Enums.Integrity.Dismountable => "Миниатюра доставляется в разборе",
+                Enums.Integrity.DismountableBase => "Подставка отсоединяется от миниатюры",
+                _ => "Неизвестно"
+            };
+            description += AddLine("🧱 Целостность", integrityText);
         }
-        {
-            description += $"\t🧱 Целостность:\t";
-            if (variation.integrity == Enums.Integrity.Solid)
-                description += "Миниатюра доставляется цельной";
-            else if (variation.integrity == Enums.Integrity.Dismountable)
-                description += "Миниатюра доставляется в разборе";
-            else if (variation.integrity == Enums.Integrity.DismountableBase)
-                description += "Подставка отсоединяется от миниатюры";
-            description += $"\n";
-        }
-        description += $"\t🧍 Количество фигурок:\t{variation.quantity}\n";
-        description += $"\t⚖️ Вес фигурки:\t{variation.weightGr} гр.\n";
+
+        description += AddLine("🧍 Количество фигурок", $"{variation.quantity}");
+        description += AddLine("⚖️ Вес фигурки", $"{variation.weightGr} гр.");
+
         if (variation.heightMm.HasValue)
-            description += $"\t📏 Высота фигурки:\t\t\t{variation.heightMm} мм.\n";
+            description += AddLine("📏 Высота фигурки", $"{variation.heightMm} мм.");
         if (variation.widthMm.HasValue)
-            description += $"\t📏 Ширина фигурки:\t\t\t{variation.widthMm} мм.\n";
+            description += AddLine("📏 Ширина фигурки", $"{variation.widthMm} мм.");
         if (variation.depthMm.HasValue)
-            description += $"\t📏 Длина фигурки:\t\t\t{variation.depthMm} мм.\n";
+            description += AddLine("📏 Длина фигурки", $"{variation.depthMm} мм.");
         if (variation.minHeightMm.HasValue)
-            description += $"\t↘️ Минимальная высота:\t\t\t{variation.minHeightMm} мм.\n";
+            description += AddLine("↘️ Минимальная высота", $"{variation.minHeightMm} мм.");
         if (variation.averageHeightMm.HasValue)
-            description += $"\t📊 Средняя высота:\t\t\t{variation.averageHeightMm} мм.\n";
+            description += AddLine("📊 Средняя высота", $"{variation.averageHeightMm} мм.");
         if (variation.maxHeightMm.HasValue)
-            description += $"\t⬆️ Максимальная высота:\t\t\t{variation.maxHeightMm} мм.\n";
+            description += AddLine("⬆️ Максимальная высота", $"{variation.maxHeightMm} мм.");
 
         List<object?> attributes = new()
             {
@@ -350,6 +360,7 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
                     }
                 },
                 // #Хештеги
+                /*
                 new
                 {
                     id = 23171,
@@ -361,6 +372,7 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
                         }
                     }
                 },
+                */
                 // Аннотация
                 new
                 {
