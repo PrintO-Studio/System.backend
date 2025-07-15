@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PrintO.Models;
+using PrintO.Models.Integrations;
 using PrintO.Models.Products;
 using PrintO.Models.Products.Figurine;
 
@@ -19,6 +20,8 @@ public class DataContext : IdentityDbContext<User, UserRole, int>
 
     public DbSet<FigurineReference> figurines { get; set; }
     public DbSet<FigurineVariation> figurineVariations { get; set; }
+
+    public DbSet<OzonIntegrationTask> ozonIntegrationTasks { get; set; }
 
     public DataContext(DbContextOptions<DataContext> options) : base(options)
     {
