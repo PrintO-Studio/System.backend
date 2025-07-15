@@ -4,9 +4,11 @@ using Microsoft.IdentityModel.Tokens;
 using PrintO;
 using PrintO.Intergrations;
 using PrintO.Models;
+using PrintO.Models.Integrations;
 using System.Text;
 using System.Text.Json.Serialization;
 using Zorro;
+using Zorro.Data;
 using Zorro.Middlewares;
 using Zorro.Modules.Infisical;
 using Zorro.Services;
@@ -104,7 +106,9 @@ ZorroDI
     {
         options.MultipartBodyLengthLimit = 2L * 1024 * 1024 * 1024; // 2Gb
     })
+    //.AddScoped(typeof(ModelRepository<>)) ?????????????????
     .AddScoped<OzonIntegration>()
+    .AddHostedService<OzonTasksInspector>()
     .AddControllers()
     .AddJsonOptions(options =>
     {

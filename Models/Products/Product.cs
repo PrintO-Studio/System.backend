@@ -1,3 +1,4 @@
+using PrintO.Models.Integrations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data;
@@ -7,7 +8,7 @@ using static PrintO.Models.Products.Product;
 
 namespace PrintO.Models.Products;
 
-public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject<ProductReviewDTO>, IAddable<Product.AddForm>, IUpdateable<Product.UpdateForm>, IUpdateable<OzonVersionBumpUpdate>
+public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject<ProductReviewDTO>, IAddable<AddForm>, IUpdateable<UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -35,10 +36,13 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
     [IncludeWhen("INCLUDE_NOTES")]
     public virtual ICollection<Note> notes { get; set; } = new List<Note>();
 
-    public uint productVersion { get; set; } = 1;
-    public uint? ozonIntegrationVersion { get; set; }
-    public uint? wildberriesIntegrationVersion { get; set; }
-    public uint? yandexIntegrationVersion { get; set; }
+    public uint version { get; set; } = 1;
+
+    [AlwaysInclude]
+    public virtual ICollection<OzonIntegrationTask> ozonIntegrations { get; set; } = new List<OzonIntegrationTask>();
+
+    //public uint? wildberriesIntegrationVersion { get; set; }
+    //public uint? yandexIntegrationVersion { get; set; }
 
     public bool AddFill(AddForm form)
     {
@@ -62,14 +66,7 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         if (form.explicitContent.HasValue)
             explicitContent = form.explicitContent.Value;
 
-        productVersion++;
-
-        return true;
-    }
-
-    public bool UpdateFill(OzonVersionBumpUpdate form)
-    {
-        ozonIntegrationVersion = productVersion;
+        version++;
 
         return true;
     }
@@ -91,6 +88,10 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
             files = this.files.Select(f => f.MapToDTO());
         }
 
+        var ozonLastTask = ozonIntegrations.Count > 0 ? 
+            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO() : 
+            null;
+
         return new
         {
             Id,
@@ -104,10 +105,19 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
             images = images.OrderBy(i => i.index).Select(i => i.MapToDTO()),
             versions = new
             {
-                productVersion,
-                ozonIntegrationVersion,
-                wildberriesIntegrationVersion,
-                yandexIntegrationVersion
+                version,
+                ozon = new
+                {
+                    lastTask = ozonLastTask
+                },
+                wildberries = new
+                {
+
+                },
+                yandex = new
+                {
+
+                }
             },
             notes = notes.Select(n => n.MapToDTO()),
         };
@@ -132,6 +142,10 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
             }
         }
 
+        var ozonLastTask = ozonIntegrations.Count > 0 ?
+            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO() :
+            null;
+
         return new ProductReviewDTO()
         {
             id = Id,
@@ -141,10 +155,19 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
             primaryImage = primaryImage,
             versions = new
             {
-                productVersion,
-                ozonIntegrationVersion,
-                wildberriesIntegrationVersion,
-                yandexIntegrationVersion
+                version,
+                ozon = new
+                {
+                    lastTask = ozonLastTask,
+                },
+                wildberries = new
+                {
+
+                },
+                yandex = new
+                {
+
+                }
             }
         };
     }
@@ -189,8 +212,6 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         public string? description { get; set; }
         public bool? explicitContent { get; set; }
     }
-
-    public struct OzonVersionBumpUpdate { }
 
     public struct ProductReviewDTO
     {

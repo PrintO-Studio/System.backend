@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PrintO;
 
@@ -11,9 +12,11 @@ using PrintO;
 namespace PrintOSystem.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250714211907_Integrations_task_executor_id")]
+    partial class Integrations_task_executor_id
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,15 +191,15 @@ namespace PrintOSystem.Migrations
                     b.Property<DateTime>("executionDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int>("figurineId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("inProgress")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("logs")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int>("productId")
-                        .HasColumnType("int");
 
                     b.Property<bool?>("success")
                         .HasColumnType("tinyint(1)");
@@ -211,7 +214,7 @@ namespace PrintOSystem.Migrations
 
                     b.HasIndex("exectionUserId");
 
-                    b.HasIndex("productId");
+                    b.HasIndex("figurineId");
 
                     b.ToTable("ozonIntegrationTasks");
                 });
@@ -390,6 +393,12 @@ namespace PrintOSystem.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<int?>("ozonLastTaskId")
+                        .HasColumnType("int");
+
+                    b.Property<uint>("productVersion")
+                        .HasColumnType("int unsigned");
+
                     b.Property<string>("series")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -397,10 +406,9 @@ namespace PrintOSystem.Migrations
                     b.Property<int>("storeId")
                         .HasColumnType("int");
 
-                    b.Property<uint>("version")
-                        .HasColumnType("int unsigned");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ozonLastTaskId");
 
                     b.HasIndex("storeId");
 
@@ -583,15 +591,15 @@ namespace PrintOSystem.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PrintO.Models.Products.Product", "product")
-                        .WithMany("ozonIntegrations")
-                        .HasForeignKey("productId")
+                    b.HasOne("PrintO.Models.Products.Figurine.FigurineReference", "figurine")
+                        .WithMany()
+                        .HasForeignKey("figurineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("executionUser");
 
-                    b.Navigation("product");
+                    b.Navigation("figurine");
                 });
 
             modelBuilder.Entity("PrintO.Models.InvitationToken", b =>
@@ -638,11 +646,17 @@ namespace PrintOSystem.Migrations
 
             modelBuilder.Entity("PrintO.Models.Products.Product", b =>
                 {
+                    b.HasOne("PrintO.Models.Integrations.OzonIntegrationTask", "ozonLastTask")
+                        .WithMany()
+                        .HasForeignKey("ozonLastTaskId");
+
                     b.HasOne("PrintO.Models.Store", "store")
                         .WithMany("products")
                         .HasForeignKey("storeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ozonLastTask");
 
                     b.Navigation("store");
                 });
@@ -688,8 +702,6 @@ namespace PrintOSystem.Migrations
                     b.Navigation("images");
 
                     b.Navigation("notes");
-
-                    b.Navigation("ozonIntegrations");
                 });
 
             modelBuilder.Entity("PrintO.Models.Store", b =>

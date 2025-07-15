@@ -19,5 +19,7 @@ public abstract class IntegrationController<TIntegradable, TProductReference, TV
         _integration = integration;
     }
 
-    public abstract IActionResult PostUploadFigurine(int id);
+    public abstract IActionResult PostUpdateAllFigurines();
+
+    public abstract IActionResult PostUpdateFigurine(int id);
 }
