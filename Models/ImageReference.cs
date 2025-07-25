@@ -5,7 +5,7 @@ using static PrintO.Models.ImageReference;
 
 namespace PrintO.Models;
 
-public class ImageReference : IEntity, IDataTransferObject<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class ImageReference : IEntity, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -38,7 +38,7 @@ public class ImageReference : IEntity, IDataTransferObject<object>, IAddable<Add
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {

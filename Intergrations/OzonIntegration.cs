@@ -285,9 +285,9 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
 
         string AddLine(string label, string value)
         {
-            int totalLength = 40;
-            string dots = new string('.', Math.Max(1, totalLength - label.Length));
-            return $"{label}{dots}{value}\n";
+            int totalLength = 45;
+            int dotsCount = Math.Max(2, totalLength - label.Length);
+            return $"{label}{new string('.', dotsCount)}{value}\n";
         }
 
         description += AddLine("🎨 Цвет", (variation.color == Enums.Color.Gray ? "серый" : "белый"));

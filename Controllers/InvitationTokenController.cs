@@ -24,7 +24,7 @@ public class InvitationTokenController : Controller
             .Throw(new(statusCode: StatusCodes.Status403Forbidden))
         )
 
-        .Add<InvitationToken, InvitationToken.AddForm>(new())
+        .Add<InvitationToken, InvitationToken.AddForm>(new InvitationToken.AddForm())
 
         .MapToDTO<InvitationToken, object>()
 

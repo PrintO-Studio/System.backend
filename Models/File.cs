@@ -1,13 +1,14 @@
 using PrintO.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Zorro.Data;
 using Zorro.Data.Attributes;
 using Zorro.Data.Interfaces;
 using static PrintO.Models.File;
 
 namespace PrintO.Models;
 
-public class File : IEntity, IDataTransferObject<object>, IAddable<AddForm>
+public class File : IEntity, IDTO<object>, IAddable<AddForm>
 {
     [Key]
     public int Id { get; set; }
@@ -44,17 +45,20 @@ public class File : IEntity, IDataTransferObject<object>, IAddable<AddForm>
         return true;
     }
 
-    public object MapToDTO(dynamic? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
+        MinIORepository minIORepo = context.GetService<MinIORepository>();
+        string fullPath = minIORepo.GetFullPath(filePath);
+
         return new
         {
             //filePath,
             Id,
             uploadDateTime,
-            argsObject?.fullPath,
+            fullPath,
             contentType,
             length,
-            tags = tags.Select(t => t.MapToDTO()),
+            tags = tags.Select(t => t.MapToDTO(context)),
         };
     }
 

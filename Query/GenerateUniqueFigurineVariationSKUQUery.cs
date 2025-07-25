@@ -6,14 +6,14 @@ namespace PrintO.Query;
 
 public static class GenerateUniqueFigurineVariationSKUQUery
 {
-    public static (QueryContext, object?) GenerateUniqueFigurineVariationSKU(
-        this (QueryContext context, object?) carriage,
+    public static QueryContext GenerateUniqueFigurineVariationSKU(
+        this QueryContext context,
         out string separateSKU,
         int productId
     )
     {
-        var fRepo = carriage.context.http.RequestServices.GetService<ModelRepository<FigurineReference>>()!;
-        var fvRepo = carriage.context.http.RequestServices.GetService<ModelRepository<FigurineVariation>>()!;
+        var fRepo = context.GetService<ModelRepository<FigurineReference>>()!;
+        var fvRepo = context.GetService<ModelRepository<FigurineVariation>>()!;
 
         IDictionary<string, bool?> c = new Dictionary<string, bool?>
         {
@@ -24,7 +24,7 @@ public static class GenerateUniqueFigurineVariationSKUQUery
         if (figurine.variations.Count == 0)
         {
             separateSKU = figurine.product.SKU;
-            return carriage;
+            return context;
         }
         else
         {
@@ -37,7 +37,7 @@ public static class GenerateUniqueFigurineVariationSKUQUery
             while (fvRepo.Find(v => v.separateSKU == newSeparateSKU) is not null);
 
             separateSKU = newSeparateSKU;
-            return carriage;
+            return context;
         }
     }
 }

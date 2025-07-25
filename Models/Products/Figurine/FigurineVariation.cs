@@ -7,7 +7,7 @@ using static PrintO.Models.Products.Figurine.FigurineVariation;
 
 namespace PrintO.Models.Products.Figurine;
 
-public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class FigurineVariation : IEntity, ISellable, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -115,7 +115,7 @@ public class FigurineVariation : IEntity, ISellable, IDataTransferObject<object>
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {

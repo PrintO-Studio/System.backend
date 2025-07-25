@@ -6,7 +6,7 @@ using static PrintO.Models.Store;
 
 namespace PrintO.Models;
 
-public class Store : IEntity, IDataTransferObject<StoreDTO>, IAddable<AddForm>, IUpdateable<UserJoinForm>
+public class Store : IEntity, IDTO<StoreDTO>, IAddable<AddForm>, IUpdateable<UserJoinForm>
 {
     [Key]
     public int Id { get; set; }
@@ -34,7 +34,7 @@ public class Store : IEntity, IDataTransferObject<StoreDTO>, IAddable<AddForm>, 
         return true;
     }
 
-    public StoreDTO MapToDTO(object? argsObject = null)
+    public StoreDTO MapToDTO(Zorro.Query.QueryContext context)
     {
         var dto = new StoreDTO()
         {

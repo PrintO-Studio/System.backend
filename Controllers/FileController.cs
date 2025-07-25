@@ -34,7 +34,7 @@ public class FileController : Controller
         .Eject(_ => _.FindById<Product>(productId), out var product)
 
         .If(product.storeId != selectedStoreId, _ => _
-            .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
+            .Throw(new (statusCode: StatusCodes.Status403Forbidden))
         )
 
         .Eject(_ => _.GetUser<User, int>(), out var me)
@@ -50,7 +50,7 @@ public class FileController : Controller
 
             .Add<Models.File, Models.File.AddForm>(fileAdd, fileId)
 
-            .MapToDTO<Models.File, object>(new { fullPath = minIORepo.GetFullPath(filePath) })
+            .MapToDTO<Models.File, object>()
         )
 
         .EndAndReturn();
@@ -69,7 +69,7 @@ public class FileController : Controller
         .Eject(_ => _.FindById<Product>(productId), out var product)
 
         .If(product.storeId != selectedStoreId, _ => _
-            .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
+            .Throw(new (statusCode: StatusCodes.Status403Forbidden))
         )
 
         .Eject(_ => _.FindById<Models.File>(id), out var file)

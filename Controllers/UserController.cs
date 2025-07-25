@@ -24,7 +24,7 @@ public class UserController : Controller
 
         .Eject(GetUserQuery.GetUser<User, int>, out var me)
 
-        .GetAllWhere<Store>(s => s.members.Any(m => m.Id == me.Id))
+        .GetAll<Store>(s => s.members.Any(m => m.Id == me.Id))
 
         .MapToDTOs<Store, StoreDTO>()
 
@@ -44,7 +44,7 @@ public class UserController : Controller
         .Eject(_ => _.FindById<Store>(id), out var store)
 
         .If(store.members.Any(m => m.Id == me.Id) is false, _ => _
-            .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
+            .Throw(new (statusCode: StatusCodes.Status403Forbidden))
         )
 
         .SwitchTo(me)

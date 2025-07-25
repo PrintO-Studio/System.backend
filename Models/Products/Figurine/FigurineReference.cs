@@ -6,7 +6,7 @@ using Zorro.Data.Interfaces;
 
 namespace PrintO.Models.Products.Figurine;
 
-public class FigurineReference : IEntity, IProductReference<FigurineVariation>, IDataTransferObject<object>, IAddable<FigurineReference.AddForm>
+public class FigurineReference : IEntity, IProductReference<FigurineVariation>, IDTO<object>, IAddable<FigurineReference.AddForm>
 {
     [Key]
     public int Id { get; set; }
@@ -26,13 +26,13 @@ public class FigurineReference : IEntity, IProductReference<FigurineVariation>, 
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {
             Id,
-            product = ((IDataTransferObject<object>)product).MapToDTO(argsObject),
-            variations = variations.Select(v => v.MapToDTO()),
+            product = ((IDTO<object>)product).MapToDTO(context),
+            variations = variations.Select(v => v.MapToDTO(context)),
         };
     }
 

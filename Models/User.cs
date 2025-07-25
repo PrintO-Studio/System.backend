@@ -7,7 +7,7 @@ using static PrintO.Models.User;
 
 namespace PrintO.Models;
 
-public class User : IdentityUser<int>, IEntity, IDataTransferObject<UserDTO>, IUpdateable<SelectStoreForm>
+public class User : IdentityUser<int>, IEntity, IDTO<UserDTO>, IUpdateable<SelectStoreForm>
 {
     int IEntity.Id
     {
@@ -35,7 +35,7 @@ public class User : IdentityUser<int>, IEntity, IDataTransferObject<UserDTO>, IU
         return true;
     }
 
-    public UserDTO MapToDTO(object? argsObject = null)
+    public UserDTO MapToDTO(Zorro.Query.QueryContext context)
     {
         return new UserDTO()
         {
