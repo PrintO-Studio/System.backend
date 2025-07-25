@@ -7,7 +7,7 @@ using static PrintO.Models.FileTag;
 
 namespace PrintO.Models;
 
-public class FileTag : IEntity, IDataTransferObject<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class FileTag : IEntity, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -41,7 +41,7 @@ public class FileTag : IEntity, IDataTransferObject<object>, IAddable<AddForm>, 
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {

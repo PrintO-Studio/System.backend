@@ -27,10 +27,10 @@ public class ImageController : Controller
         .Eject(_ => _.FindById<Product>(productId), out var product)
 
         .If(product.storeId != selectedStoreId, _ => _
-            .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
+            .Throw(new (statusCode: StatusCodes.Status403Forbidden))
         )
 
-        .Eject(_ => _.GetAllWhere<ImageReference>(i => i.productId == productId), out var initialImagesEnumerable)
+        .Eject(_ => _.GetAll<ImageReference>(i => i.productId == productId), out var initialImagesEnumerable)
 
         .Eject(initialImagesEnumerable.ToArray(), out var initialImages)
 

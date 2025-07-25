@@ -9,31 +9,30 @@ namespace PrintO.Query;
 
 public static class CheckStoreMembershipQuery
 {
-    public static (QueryContext, object?) CheckStoreMembership(
-        this (QueryContext, object?) carriage,
+    public static QueryContext CheckStoreMembership(
+        this QueryContext context,
         out int outSelectedStoreId
     )
     {
-        var output = carriage
+        context
+            .Eject(GetUserQuery.GetUser<User, int>, out var me)
 
-        .Eject(GetUserQuery.GetUser<User, int>, out var me)
+            .If(me.selectedStoreId.HasValue is false, _ => _
+                .Throw(new (statusCode: StatusCodes.Status400BadRequest))
+            )
 
-        .If(me.selectedStoreId.HasValue is false, _ => _
-            .Throw(new QueryException(statusCode: StatusCodes.Status400BadRequest))
-        )
+            .Eject(me.selectedStoreId!.Value, out int selectedStoreId)
 
-        .Eject(me.selectedStoreId!.Value, out int selectedStoreId)
+            .SetInclusion("INCLUDE_MEMBERS")
 
-        .SetInclusion("INCLUDE_MEMBERS")
+            .Eject(_ => _.FindById<Store>(selectedStoreId), out var store)
 
-        .Eject(_ => _.FindById<Store>(selectedStoreId), out var store)
-
-        .If(store.members.Any(m => m.Id == me.Id) is false, _ => _
-            .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
-        );
+            .If(store.members.Any(m => m.Id == me.Id) is false, _ => _
+                .Throw(new (statusCode: StatusCodes.Status403Forbidden))
+            );
 
         outSelectedStoreId = selectedStoreId;
 
-        return output;
+        return context;
     }
 }

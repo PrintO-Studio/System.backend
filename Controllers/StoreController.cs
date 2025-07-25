@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintO.Models;
+using Zorro.Middlewares;
 using Zorro.Modules.JwtBearer.Attributes;
 using Zorro.Query;
 using Zorro.Query.Essentials;
@@ -25,7 +26,7 @@ public class StoreController : Controller
 
         .MapToDTOs<Store, StoreDTO>()
 
-        .PaginateAndWrap(startIndex, pageSize)
+        .Paginate(startIndex, pageSize)
 
         .EndAndReturn();
     }
@@ -56,13 +57,13 @@ public class StoreController : Controller
         .Eject(GetUserQuery.GetUser<User, int>, out User me)
 
         .If(me.isAdmin is false, _ => _
-            .Throw(new(statusCode: StatusCodes.Status403Forbidden))
+            .Throw(new (statusCode: StatusCodes.Status403Forbidden))
         )
 
         .TryEject(_ => _.Find<Store>(s => s.name == input.name), out var sameNameStore)
 
         .If(sameNameStore is not null, _ => _
-            .Throw(new(statusCode: StatusCodes.Status400BadRequest))
+            .Throw(new (statusCode: StatusCodes.Status400BadRequest))
         )
 
         .Eject(_ => _.Add<Store, AddForm>(input), out var newStore)
@@ -85,7 +86,7 @@ public class StoreController : Controller
         .Eject(GetUserQuery.GetUser<User, int>, out User me)
 
         .If(me.isAdmin is false, _ => _
-            .Throw(new(statusCode: StatusCodes.Status403Forbidden))
+            .Throw(new (statusCode: StatusCodes.Status403Forbidden))
         )
 
         .SetInclusion("INCLUDE_MEMBERS")
@@ -97,7 +98,7 @@ public class StoreController : Controller
         )
 
         .If(store.members.Any(m => m.Id == userId), _ => _
-            .Throw(new(statusCode: StatusCodes.Status400BadRequest))
+            .Throw(new (statusCode: StatusCodes.Status400BadRequest))
         )
 
         .Eject(_ => _.Find<User>(u => u.Id == userId), out User inviteUser)
@@ -108,38 +109,4 @@ public class StoreController : Controller
 
         .EndAndReturn();
     }
-
-    /*
-    [HttpPatch]
-    [Route("/stores/{id}")]
-    [AllowAnonymous]
-    public IActionResult PatchTestModel(int id, [FromBody] TestModel.UpdateForm input)
-    {
-        return this.StartQuery()
-
-        .If(input.referenceModelId.HasValue, _ => _
-            .FindById<TestModel>(input.referenceModelId!.Value)
-        )
-
-        .SetInclusion("INCLUDE_REF_MODEL")
-
-        .Update<TestModel, TestModel.UpdateForm>(id, input)
-
-        .MapToDTO()
-
-        .EndAndReturn();
-    }
-
-    [HttpDelete]
-    [Route("/stores/{id}")]
-    [AllowAnonymous]
-    public IActionResult DeleteTestModel(int id)
-    {
-        return this.StartQuery()
-
-        .Remove<TestModel>(id)
-
-        .EndAndReturn();
-    }
-    */
 }

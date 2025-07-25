@@ -56,7 +56,7 @@ public class JwtAuthController : Controller
 
         .Eject(stores.ToArray(), out var storesArray)
 
-        .ForEach<Store, object, object>(storesArray, (store, _) => _
+        .ForEach(storesArray, (store, _) => _
             .Eject(new Store.UserJoinForm(me), out var joinForm)
 
             .Update<Store, Store.UserJoinForm>(store.Id, joinForm)

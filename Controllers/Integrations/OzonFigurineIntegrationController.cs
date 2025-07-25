@@ -62,7 +62,7 @@ public class OzonFigurineIntegrationController : IntegrationController<OzonInteg
 
         .FindById<Product>(figurine.productId)
 
-        .MapToDTO<Product, Product.ProductReviewDTO>(new { minIORepo })
+        .MapToDTO<Product, Product.ProductReviewDTO>()
 
         .EndAndReturn();
     }

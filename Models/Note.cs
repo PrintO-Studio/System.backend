@@ -7,7 +7,7 @@ using static PrintO.Models.Note;
 
 namespace PrintO.Models;
 
-public class Note : IEntity, IDataTransferObject<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class Note : IEntity, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -41,7 +41,7 @@ public class Note : IEntity, IDataTransferObject<object>, IAddable<AddForm>, IUp
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Query;
 using PrintO.Models.Integrations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using static PrintO.Models.Products.Product;
 
 namespace PrintO.Models.Products;
 
-public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject<ProductReviewDTO>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<AddForm>, IUpdateable<UpdateForm>
 {
     [Key]
     public int Id { get; set; }
@@ -71,25 +72,19 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
         return true;
     }
 
-    object IDataTransferObject<object>.MapToDTO(dynamic? argsObject)
+    object IDTO<object>.MapToDTO(Zorro.Query.QueryContext context)
     {
         IEnumerable<object>? files = null;
-        if (argsObject is not null && argsObject.minIORepo is not null)
+        
+        MinIORepository minIORepo = context.GetService<MinIORepository>();
+        Func<File, object> fileBuilder = (f) =>
         {
-            MinIORepository? minIORepo = argsObject.minIORepo;
-            Func<File, object> fileBuilder = (f) =>
-            {
-                return f.MapToDTO(new { fullPath = minIORepo!.GetFullPath(f.filePath) });
-            };
-            files = this.files.Select(fileBuilder);
-        }
-        else
-        {
-            files = this.files.Select(f => f.MapToDTO());
-        }
+            return f.MapToDTO(context);
+        };
+        files = this.files.Select(fileBuilder);
 
         var ozonLastTask = ozonIntegrations.Count > 0 ? 
-            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO() : 
+            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) : 
             null;
 
         return new
@@ -99,10 +94,10 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
             name,
             series,
             description,
-            store = store?.MapToDTO(),
+            store = store?.MapToDTO(context),
             explicitContent,
             files,
-            images = images.OrderBy(i => i.index).Select(i => i.MapToDTO()),
+            images = images.OrderBy(i => i.index).Select(i => i.MapToDTO(context)),
             versions = new
             {
                 version,
@@ -119,13 +114,13 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
 
                 }
             },
-            notes = notes.Select(n => n.MapToDTO()),
+            notes = notes.Select(n => n.MapToDTO(context)),
         };
     }
 
-    ProductReviewDTO IDataTransferObject<ProductReviewDTO>.MapToDTO(dynamic? argsObject)
+    ProductReviewDTO IDTO<ProductReviewDTO>.MapToDTO(Zorro.Query.QueryContext context)
     {
-        MinIORepository? minIORepo = argsObject!.minIORepo;
+        MinIORepository minIORepo = context.GetService<MinIORepository>();
 
         ImageReference? primaryImageRef = images.OrderBy(i => i.index).FirstOrDefault();
         object? primaryImage = null;
@@ -135,15 +130,12 @@ public class Product : IEntity, IDataTransferObject<object>, IDataTransferObject
 
             if (primaryImageFile is not null)
             {
-                primaryImage = primaryImageFile.MapToDTO(new
-                {
-                    fullPath = minIORepo.GetFullPath(primaryImageFile.filePath)
-                });
+                primaryImage = primaryImageFile.MapToDTO(context);
             }
         }
 
         var ozonLastTask = ozonIntegrations.Count > 0 ?
-            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO() :
+            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) :
             null;
 
         return new ProductReviewDTO()

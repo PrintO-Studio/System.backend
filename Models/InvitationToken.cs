@@ -4,7 +4,7 @@ using Zorro.Data.Interfaces;
 
 namespace PrintO.Models;
 
-public class InvitationToken : IEntity, IDataTransferObject<object>, IAddable<InvitationToken.AddForm>, IUpdateable<InvitationToken.UseForm>
+public class InvitationToken : IEntity, IDTO<object>, IAddable<InvitationToken.AddForm>, IUpdateable<InvitationToken.UseForm>
 {
     [Key]
     public int Id { get; set; }
@@ -42,7 +42,7 @@ public class InvitationToken : IEntity, IDataTransferObject<object>, IAddable<In
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {

@@ -41,7 +41,7 @@ public class FigurineController : Controller
 
         .Find<FigurineReference>(f => f.product.storeId == selectedStoreId && f.productId == productId)
 
-        .MapToDTO<FigurineReference, object>(new { minIORepo })
+        .MapToDTO<FigurineReference, object>()
 
         .EndAndReturn();
     }
@@ -54,25 +54,25 @@ public class FigurineController : Controller
 
         .CheckStoreMembership(out int selectedStoreId)
 
-        .GetAllWhere<Product>(p => p.storeId == selectedStoreId && p.SKU == input.product.SKU)
+        .GetAll<Product>(p => p.storeId == selectedStoreId && p.SKU == input.product.SKU)
 
         .If(p => p?.Any() ?? false, _ => _
-            .Throw(new QueryException(
+            .Throw(new (
                 statusCode: StatusCodes.Status400BadRequest,
                 fields: ("SKU", ["Product with such SKU already exist."])))
         )
 
         .SetInclusion("INCLUDE_VARIATIONS")
 
-        .GetAllWhere<FigurineReference>(f => f.product.storeId == selectedStoreId && f.variations.Any(v => v.separateSKU == input.product.SKU))
+        .GetAll<FigurineReference>(f => f.product.storeId == selectedStoreId && f.variations.Any(v => v.separateSKU == input.product.SKU))
 
         .If(f => f?.Any() ?? false, _ => _
-            .Throw(new QueryException(
+            .Throw(new (
                 statusCode: StatusCodes.Status400BadRequest,
                 fields: ("SKU", ["Figurine variation with such SKU already exist."])))
         )
 
-        .Eject(_ => _.Add<Product, Product.AddForm>(new(input.product, selectedStoreId)), out Product product)
+        .Eject(_ => _.Add<Product, Product.AddForm>(new Product.AddForm(input.product, selectedStoreId)), out Product product)
 
         .Eject(new FigurineReference.AddForm(product.Id), out var figurineAdd)
 
@@ -106,10 +106,12 @@ public class FigurineController : Controller
                 .Eject(_ => _.FindById<FigurineVariation>(variationUpdate.id), out var variation)
 
                 .If(variation.figurineId != figurine.Id, _ => _
-                    .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
-                )!
+                    .Throw(new (statusCode: StatusCodes.Status403Forbidden))
+                )
 
-                .Update<FigurineVariation, FigurineVariation.UpdateForm>(variationUpdate)
+                .SwitchTo(variation)
+
+                .Update(variationUpdate)
             )
         )
 
@@ -128,7 +130,7 @@ public class FigurineController : Controller
                 .Eject(_ => _.FindById<FigurineVariation>(removeVariationId), out var variation)
 
                 .If(variation.figurineId != figurine.Id, _ => _
-                    .Throw(new QueryException(statusCode: StatusCodes.Status403Forbidden))
+                    .Throw(new (statusCode: StatusCodes.Status403Forbidden))
                 )!
 
                 .Remove<FigurineVariation>(removeVariationId)
@@ -148,13 +150,13 @@ public class FigurineController : Controller
 
         .Eject(_ => _.Find<FigurineReference>(f => f.product.storeId == selectedStoreId && f.productId == productId), out var figurine)
 
-        .Eject(_ => _.GetAllWhere<ImageReference>(i => i.productId == productId), out var images)
+        .Eject(_ => _.GetAll<ImageReference>(i => i.productId == productId), out var images)
         .Eject(images.ToArray(), out var imageArray)
         .ForEach(imageArray, (image, _) => _
             .Remove<ImageReference>(image.Id)
         )
 
-        .Eject(_ => _.GetAllWhere<Models.File>(i => i.productId == productId), out var files)
+        .Eject(_ => _.GetAll<Models.File>(i => i.productId == productId), out var files)
         .Eject(files.ToArray(), out var fileArray)
         .ForEach(fileArray, (file, _) => _
             .Delete<MinIORepository, IMinioClient, Bucket, Item>(file.filePath)
@@ -162,7 +164,7 @@ public class FigurineController : Controller
             .Remove<Models.File>(file.Id)
         )
 
-        .Eject(_ => _.GetAllWhere<FigurineVariation>(i => i.figurineId == figurine.Id), out var variations)
+        .Eject(_ => _.GetAll<FigurineVariation>(i => i.figurineId == figurine.Id), out var variations)
         .Eject(variations.ToArray(), out var variationArray)
         .ForEach(variationArray, (variation, _) => _
             .Remove<FigurineVariation>(variation.Id)

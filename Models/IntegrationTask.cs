@@ -6,7 +6,7 @@ using static PrintO.Models.IntegrationTask;
 
 namespace PrintO.Models;
 
-public class IntegrationTask : IEntity, IDataTransferObject<object>, IAddable<AddForm>, IUpdateable<UpdateForm>, IUpdateable<AppendLogsForm>
+public class IntegrationTask : IEntity, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>, IUpdateable<AppendLogsForm>
 {
     [Key]
     public int Id { get; set; }
@@ -54,7 +54,7 @@ public class IntegrationTask : IEntity, IDataTransferObject<object>, IAddable<Ad
         return true;
     }
 
-    public object MapToDTO(object? argsObject = null)
+    public object MapToDTO(Zorro.Query.QueryContext context)
     {
         return new
         {
