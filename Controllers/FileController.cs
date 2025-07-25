@@ -25,8 +25,6 @@ public class FileController : Controller
     [RequestSizeLimit((long)2e+9)] // 2Gb
     public IActionResult PutProductFiles(int productId, IFormFile[] files)
     {
-        var minIORepo = HttpContext.RequestServices.GetService<MinIORepository>()!;
-
         return this.StartQuery()
 
         .CheckStoreMembership(out int selectedStoreId)
@@ -60,8 +58,6 @@ public class FileController : Controller
     [Route("/products/{productId}/files/{id}")]
     public IActionResult DeleteProductFile(int productId, int id)
     {
-        var minIORepo = HttpContext.RequestServices.GetService<MinIORepository>()!;
-
         return this.StartQuery()
 
         .CheckStoreMembership(out int selectedStoreId)
