@@ -76,7 +76,6 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
     {
         IEnumerable<object>? files = null;
         
-        MinIORepository minIORepo = context.GetService<MinIORepository>();
         Func<File, object> fileBuilder = (f) =>
         {
             return f.MapToDTO(context);
@@ -120,8 +119,6 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
 
     ProductReviewDTO IDTO<ProductReviewDTO>.MapToDTO(Zorro.Query.QueryContext context)
     {
-        MinIORepository minIORepo = context.GetService<MinIORepository>();
-
         ImageReference? primaryImageRef = images.OrderBy(i => i.index).FirstOrDefault();
         object? primaryImage = null;
         if (primaryImageRef is not null)
