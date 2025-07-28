@@ -1,4 +1,5 @@
 using PrintO.Models.Products.Figurine;
+using System.Collections.Concurrent;
 using Zorro.Data;
 using Zorro.Query;
 
@@ -15,10 +16,9 @@ public static class GenerateUniqueFigurineVariationSKUQUery
         var fRepo = context.GetService<ModelRepository<FigurineReference>>()!;
         var fvRepo = context.GetService<ModelRepository<FigurineVariation>>()!;
 
-        IDictionary<string, bool?> c = new Dictionary<string, bool?>
-        {
-            { "INCLUDE_VARIATIONS", true }
-        };
+        ConcurrentDictionary<string, bool?> c = new ConcurrentDictionary<string, bool?>();
+        c.TryAdd("INCLUDE_VARIATIONS", true);
+
         var figurine = fRepo.FindById(productId, c)!;
 
         if (figurine.variations.Count == 0)

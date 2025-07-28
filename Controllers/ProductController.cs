@@ -12,11 +12,18 @@ namespace PrintO.Controllers;
 [JwtAuthorize]
 public class ProductController : Controller
 {
+    private readonly ILogger<ProductController> _logger;
+
+    public ProductController(ILogger<ProductController> logger)
+    {
+        _logger = logger;
+    }
+
     [HttpGet]
     [Route("/products")]
     public IActionResult GetAllProducts(string? searchQuery, int startIndex, int pageSize = 12)
     {
-        return this.StartQuery()
+        return this.StartQuery(_logger)
 
         .CheckStoreMembership(out int selectedStoreId)
 
