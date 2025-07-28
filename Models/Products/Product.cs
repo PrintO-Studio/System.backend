@@ -1,8 +1,6 @@
-using Microsoft.EntityFrameworkCore.Query;
 using PrintO.Models.Integrations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Zorro.Data;
 using Zorro.Data.Attributes;
 using Zorro.Data.Interfaces;
 using static PrintO.Models.Products.Product;
@@ -75,16 +73,15 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
     object IDTO<object>.MapToDTO(Zorro.Query.QueryContext context)
     {
         IEnumerable<object>? files = null;
-        
-        MinIORepository minIORepo = context.GetService<MinIORepository>();
+
         Func<File, object> fileBuilder = (f) =>
         {
             return f.MapToDTO(context);
         };
         files = this.files.Select(fileBuilder);
 
-        var ozonLastTask = ozonIntegrations.Count > 0 ? 
-            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) : 
+        var ozonLastTask = ozonIntegrations.Count > 0 ?
+            ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) :
             null;
 
         return new
@@ -120,17 +117,15 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
 
     ProductReviewDTO IDTO<ProductReviewDTO>.MapToDTO(Zorro.Query.QueryContext context)
     {
-        MinIORepository minIORepo = context.GetService<MinIORepository>();
-
         ImageReference? primaryImageRef = images.OrderBy(i => i.index).FirstOrDefault();
-        object? primaryImage = null;
+        string? primaryImagePath = null;
         if (primaryImageRef is not null)
         {
             var primaryImageFile = files.FirstOrDefault(f => f.Id == primaryImageRef.fileId);
 
             if (primaryImageFile is not null)
             {
-                primaryImage = primaryImageFile.MapToDTO(context);
+                primaryImagePath = ((IDTO<string>)primaryImageFile).MapToDTO(context);
             }
         }
 
@@ -144,7 +139,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
             SKU = SKU,
             name = name,
             series = series,
-            primaryImage = primaryImage,
+            primaryImage = primaryImagePath,
             versions = new
             {
                 version,

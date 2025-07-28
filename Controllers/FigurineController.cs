@@ -23,8 +23,6 @@ public class FigurineController : Controller
     [Route("products/{productId}/figurine")]
     public IActionResult GetFigurine(int productId)
     {
-        var minIORepo = HttpContext.RequestServices.GetService<MinIORepository>()!;
-
         return this.StartQuery()
 
         .CheckStoreMembership(out int selectedStoreId)

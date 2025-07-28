@@ -4,11 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data;
 using Zorro.Data.Attributes;
 using Zorro.Data.Interfaces;
+using Zorro.Query;
 using static PrintO.Models.File;
 
 namespace PrintO.Models;
 
-public class File : IEntity, IDTO<object>, IAddable<AddForm>
+public class File : IEntity, IDTO<object>, IDTO<string>, IAddable<AddForm>
 {
     [Key]
     public int Id { get; set; }
@@ -60,6 +61,12 @@ public class File : IEntity, IDTO<object>, IAddable<AddForm>
             length,
             tags = tags.Select(t => t.MapToDTO(context)),
         };
+    }
+
+    string IDTO<string>.MapToDTO(QueryContext context)
+    {
+        MinIORepository minIORepo = context.GetService<MinIORepository>();
+        return minIORepo.GetFullPath(filePath);
     }
 
     public struct AddForm
