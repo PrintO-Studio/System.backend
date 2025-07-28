@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PrintO.Models.Products;
 using PrintO.Query;
-using Zorro.Data;
 using Zorro.Modules.JwtBearer.Attributes;
 using Zorro.Query;
 using Zorro.Query.Essentials;
@@ -26,7 +25,7 @@ public class ProductController : Controller
         .SetInclusion("INCLUDE_IMAGES")
 
         .Eject(Array.Empty<Product>(), out IEnumerable<Product> qualifiedProducts)
-        
+
         .If(string.IsNullOrEmpty(searchQuery), _ => _
              .Eject(_ => _.GetAll<Product>(p => p.storeId == selectedStoreId), out var products)
 
@@ -35,9 +34,9 @@ public class ProductController : Controller
 
         .If(!string.IsNullOrEmpty(searchQuery), _ => _
              .Eject(_ => _.GetAll<Product>(
-                 p => p.storeId == selectedStoreId && 
+                 p => p.storeId == selectedStoreId &&
                  (p.name.Contains(searchQuery!) || p.SKU.Contains(searchQuery!) ||
-                    (!string.IsNullOrEmpty(p.series) && p.series!.Contains(searchQuery!)))), 
+                    (!string.IsNullOrEmpty(p.series) && p.series!.Contains(searchQuery!)))),
              out var products)
 
              .Execute(() => qualifiedProducts = products)
@@ -45,9 +44,9 @@ public class ProductController : Controller
 
         .SwitchTo(qualifiedProducts)
 
-        .MapToDTOs<Product, Product.ProductReviewDTO>()
-
         .Paginate(startIndex, pageSize, true)
+
+        .MapToDTOs<Product, Product.ProductReviewDTO>()
 
         .EndAndReturn();
     }
