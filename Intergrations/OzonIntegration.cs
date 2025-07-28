@@ -4,6 +4,7 @@ using PrintO.Models;
 using PrintO.Models.Integrations;
 using PrintO.Models.Products;
 using PrintO.Models.Products.Figurine;
+using System.Collections.Concurrent;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -144,12 +145,11 @@ public class OzonIntegration : IIntegradable<FigurineReference, FigurineVariatio
 
     public bool UpdateAllFigurines(User executor, int storeId)
     {
-        IDictionary<string, bool?> context = new Dictionary<string, bool?>
-        {
-            { "INCLUDE_FILES", true },
-            { "INCLUDE_IMAGES", true },
-            { "INCLUDE_VARIATIONS", true }
-        };
+        ConcurrentDictionary<string, bool?> context = new ConcurrentDictionary<string, bool?>();
+
+        context.TryAdd("INCLUDE_FILES", true);
+        context.TryAdd("INCLUDE_IMAGES", true);
+        context.TryAdd("INCLUDE_VARIATIONS", true);
 
         var figurines = _fRefRepo.GetAll(context).Where(f => f.product.storeId == storeId);
 

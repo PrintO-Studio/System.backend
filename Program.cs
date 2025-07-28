@@ -1,14 +1,11 @@
-﻿using Dumpify;
-using Microsoft.AspNetCore.Http.Features;
+﻿using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using PrintO;
 using PrintO.Intergrations;
 using PrintO.Models;
-using PrintO.Models.Integrations;
 using System.Text;
 using System.Text.Json.Serialization;
 using Zorro;
-using Zorro.Data;
 using Zorro.Middlewares;
 using Zorro.Modules.Infisical;
 using Zorro.Services;
@@ -73,7 +70,7 @@ JwtBearerService.TokenValidationMaster = new JwtBearerService.TokenValidationBui
 
 
 ZorroDI
-    .InitRaw(args)
+    .InitRaw(args, LogLevel.Warning)
     .AddInfisical(infisicalSettings)
     .AddDatabase<DataContext>(MySQLService.UseMySQL)
     .AddAuthAndIdentity<User, DataContext, UserRole, int>(JwtBearerService.UseJwtBearer)
