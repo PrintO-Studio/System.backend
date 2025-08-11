@@ -7,8 +7,8 @@ namespace PrintO.Query;
 
 public static class GenerateUniqueFigurineVariationSKUQUery
 {
-    public static QueryContext GenerateUniqueFigurineVariationSKU(
-        this QueryContext context,
+    public static HttpQueryContext GenerateUniqueFigurineVariationSKU(
+        this HttpQueryContext context,
         out string separateSKU,
         int productId
     )

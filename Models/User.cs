@@ -35,7 +35,7 @@ public class User : IdentityUser<int>, IEntity, IDTO<UserDTO>, IUpdateable<Selec
         return true;
     }
 
-    public UserDTO MapToDTO(Zorro.Query.QueryContext context)
+    public UserDTO MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         return new UserDTO()
         {

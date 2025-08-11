@@ -41,7 +41,7 @@ public class Note : IEntity, IDTO<object>, IAddable<AddForm>, IUpdateable<Update
         return true;
     }
 
-    public object MapToDTO(Zorro.Query.QueryContext context)
+    public object MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         return new
         {

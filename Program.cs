@@ -106,6 +106,9 @@ ZorroDI
     //.AddScoped(typeof(ModelRepository<>)) ?????????????????
     .AddScoped<OzonIntegration>()
     .AddHostedService<OzonTasksInspector>()
+    .AddScoped<WbIntegration>()
+    .AddHostedService<WbTasksInspector>()
+
     .AddControllers()
     .AddJsonOptions(options =>
     {

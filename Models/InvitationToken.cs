@@ -42,7 +42,7 @@ public class InvitationToken : IEntity, IDTO<object>, IAddable<InvitationToken.A
         return true;
     }
 
-    public object MapToDTO(Zorro.Query.QueryContext context)
+    public object MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         return new
         {
