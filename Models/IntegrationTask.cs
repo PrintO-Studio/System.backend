@@ -54,7 +54,7 @@ public class IntegrationTask : IEntity, IDTO<object>, IAddable<AddForm>, IUpdate
         return true;
     }
 
-    public object MapToDTO(Zorro.Query.QueryContext context)
+    public object MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         return new
         {

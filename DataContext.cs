@@ -22,6 +22,7 @@ public class DataContext : IdentityDbContext<User, UserRole, int>
     public DbSet<FigurineVariation> figurineVariations { get; set; }
 
     public DbSet<OzonIntegrationTask> ozonIntegrationTasks { get; set; }
+    public DbSet<WbIntegrationTask> wbIntegrationTasks { get; set; }
 
     public DataContext(DbContextOptions<DataContext> options) : base(options)
     {

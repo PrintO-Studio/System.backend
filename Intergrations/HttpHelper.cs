@@ -1,3 +1,4 @@
+using Dumpify;
 using System.Text;
 using Zorro.Middlewares;
 
@@ -13,7 +14,7 @@ public static class HttpHelper
 
         if (response.IsSuccessStatusCode is false)
         {
-            throw new QueryException(responseContent, (int)response.StatusCode);
+            throw new QueryException(url + ": " + responseContent, (int)response.StatusCode);
         }
         return responseContent;
     }
@@ -25,7 +26,7 @@ public static class HttpHelper
 
         if (response.IsSuccessStatusCode is false)
         {
-            throw new QueryException(responseContent, (int)response.StatusCode);
+            throw new QueryException(url + ": " + responseContent, (int)response.StatusCode);
         }
         return responseContent;
     }

@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Zorro.Data;
 using Zorro.Data.Attributes;
 using Zorro.Data.Interfaces;
-using Zorro.Query;
 using static PrintO.Models.File;
 
 namespace PrintO.Models;
@@ -46,7 +45,7 @@ public class File : IEntity, IDTO<object>, IDTO<string>, IAddable<AddForm>
         return true;
     }
 
-    public object MapToDTO(Zorro.Query.QueryContext context)
+    public object MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         MinIORepository minIORepo = context.GetService<MinIORepository>();
         string fullPath = minIORepo.GetFullPath(filePath);
@@ -63,7 +62,7 @@ public class File : IEntity, IDTO<object>, IDTO<string>, IAddable<AddForm>
         };
     }
 
-    string IDTO<string>.MapToDTO(QueryContext context)
+    string IDTO<string>.MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         MinIORepository minIORepo = context.GetService<MinIORepository>();
         return minIORepo.GetFullPath(filePath);

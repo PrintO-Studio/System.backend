@@ -34,7 +34,7 @@ public class Store : IEntity, IDTO<StoreDTO>, IAddable<AddForm>, IUpdateable<Use
         return true;
     }
 
-    public StoreDTO MapToDTO(Zorro.Query.QueryContext context)
+    public StoreDTO MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         var dto = new StoreDTO()
         {

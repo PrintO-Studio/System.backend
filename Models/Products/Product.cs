@@ -39,9 +39,8 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
 
     [AlwaysInclude]
     public virtual ICollection<OzonIntegrationTask> ozonIntegrations { get; set; } = new List<OzonIntegrationTask>();
-
-    //public uint? wildberriesIntegrationVersion { get; set; }
-    //public uint? yandexIntegrationVersion { get; set; }
+    [AlwaysInclude]
+    public virtual ICollection<WbIntegrationTask> wbIntegrations { get; set; } = new List<WbIntegrationTask>();
 
     public bool AddFill(AddForm form)
     {
@@ -70,7 +69,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         return true;
     }
 
-    object IDTO<object>.MapToDTO(Zorro.Query.QueryContext context)
+    object IDTO<object>.MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         IEnumerable<object>? files = null;
 
@@ -82,6 +81,10 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
 
         var ozonLastTask = ozonIntegrations.Count > 0 ?
             ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) :
+            null;
+
+        var wbLastTask = wbIntegrations.Count > 0 ?
+            wbIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) :
             null;
 
         return new
@@ -104,7 +107,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
                 },
                 wildberries = new
                 {
-
+                    lastTask = wbLastTask
                 },
                 yandex = new
                 {
@@ -115,7 +118,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         };
     }
 
-    ProductReviewDTO IDTO<ProductReviewDTO>.MapToDTO(Zorro.Query.QueryContext context)
+    ProductReviewDTO IDTO<ProductReviewDTO>.MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         ImageReference? primaryImageRef = images.OrderBy(i => i.index).FirstOrDefault();
         string? primaryImagePath = null;
@@ -131,6 +134,10 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
 
         var ozonLastTask = ozonIntegrations.Count > 0 ?
             ozonIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) :
+            null;
+
+        var wbLastTask = wbIntegrations.Count > 0 ?
+            wbIntegrations.OrderBy(i => i.executionDate).Last()?.MapToDTO(context) :
             null;
 
         return new ProductReviewDTO()
@@ -149,7 +156,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
                 },
                 wildberries = new
                 {
-
+                    lastTask = wbLastTask,
                 },
                 yandex = new
                 {

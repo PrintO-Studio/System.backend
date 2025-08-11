@@ -26,7 +26,7 @@ public class FigurineReference : IEntity, IProductReference<FigurineVariation>, 
         return true;
     }
 
-    public object MapToDTO(Zorro.Query.QueryContext context)
+    public object MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         return new
         {

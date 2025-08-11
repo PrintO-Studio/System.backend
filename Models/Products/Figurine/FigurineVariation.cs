@@ -115,7 +115,7 @@ public class FigurineVariation : IEntity, ISellable, IDTO<object>, IAddable<AddF
         return true;
     }
 
-    public object MapToDTO(Zorro.Query.QueryContext context)
+    public object MapToDTO(Zorro.Query.HttpQueryContext context)
     {
         return new
         {

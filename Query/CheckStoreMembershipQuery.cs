@@ -9,8 +9,8 @@ namespace PrintO.Query;
 
 public static class CheckStoreMembershipQuery
 {
-    public static QueryContext CheckStoreMembership(
-        this QueryContext context,
+    public static HttpQueryContext CheckStoreMembership(
+        this HttpQueryContext context,
         out int outSelectedStoreId
     )
     {
@@ -18,7 +18,7 @@ public static class CheckStoreMembershipQuery
             .Eject(GetUserQuery.GetUser<User, int>, out var me)
 
             .If(me.selectedStoreId.HasValue is false, _ => _
-                .Throw(new (statusCode: StatusCodes.Status400BadRequest))
+                .Throw(new(statusCode: StatusCodes.Status400BadRequest))
             )
 
             .Eject(me.selectedStoreId!.Value, out int selectedStoreId)
@@ -28,7 +28,7 @@ public static class CheckStoreMembershipQuery
             .Eject(_ => _.FindById<Store>(selectedStoreId), out var store)
 
             .If(store.members.Any(m => m.Id == me.Id) is false, _ => _
-                .Throw(new (statusCode: StatusCodes.Status403Forbidden))
+                .Throw(new(statusCode: StatusCodes.Status403Forbidden))
             );
 
         outSelectedStoreId = selectedStoreId;
