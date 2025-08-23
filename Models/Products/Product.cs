@@ -21,6 +21,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
     [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
     public string description { get; set; } = null!;
     public bool explicitContent { get; set; } = false;
+    public int? warehouseStorageNumber { get; set; }
 
     [ForeignKey(nameof(store))]
     public int storeId { get; set; }
@@ -50,6 +51,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         description = form.userAddForm.description;
         storeId = form.storeId;
         explicitContent = form.userAddForm.explicitContent ?? false;
+        warehouseStorageNumber = form.userAddForm.warehouseStorageNumber;
 
         return true;
     }
@@ -63,6 +65,8 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
             description = form.description;
         if (form.explicitContent.HasValue)
             explicitContent = form.explicitContent.Value;
+        if (form.warehouseStorageNumber.HasValue)
+            warehouseStorageNumber = form.warehouseStorageNumber.Value;
 
         version++;
 
@@ -115,6 +119,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
                 }
             },
             notes = notes.Select(n => n.MapToDTO(context)),
+            warehouseStorageNumber,
         };
     }
 
@@ -162,7 +167,8 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
                 {
 
                 }
-            }
+            },
+            warehouseStorageNumber = warehouseStorageNumber,
         };
     }
 
@@ -194,6 +200,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string description { get; set; }
         public bool? explicitContent { get; set; }
+        public int? warehouseStorageNumber { get; set; }
     }
 
     public struct UpdateForm
@@ -205,6 +212,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         [StringLength(PRODUCT_DESCRIPTION_MAX_LENGTH)]
         public string? description { get; set; }
         public bool? explicitContent { get; set; }
+        public int? warehouseStorageNumber { get; set; }
     }
 
     public struct ProductReviewDTO
@@ -215,5 +223,6 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         public string? series { get; set; }
         public object? primaryImage { get; set; }
         public object? versions { get; set; }
+        public int? warehouseStorageNumber { get; set; }
     }
 }

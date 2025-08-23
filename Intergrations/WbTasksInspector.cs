@@ -86,6 +86,7 @@ public class WbTasksInspector : BackgroundService
                     };
 
                     string mediaUpdateRequestJson = JsonSerializer.Serialize(mediaUpdateRequest, wbIntegration.jsonOptions);
+                    mediaUpdateRequestJson.Dump();
                     var mediaUpdateTask = wbIntegration.contentClient.POST("/content/v3/media/save", mediaUpdateRequestJson);
                     try
                     {
