@@ -175,6 +175,44 @@ public class FigurineController : Controller
         .EndAndDirectTo("/products");
     }
 
+    /*
+    [HttpPatch]
+    [Route("/products/figurines")]
+    public IActionResult WriteAllVariants()
+    {
+        return this.StartQuery()
+
+        .CheckStoreMembership(out int selectedStoreId)
+
+        .SetInclusion("INCLUDE_VARIATIONS")
+
+        .Eject(GetAllQuery.GetAll<FigurineReference>, out var figurines)
+        
+        .Eject(new List<Product>(), out IList<Product> returnProducts)
+
+        .ForEach(figurines, (f, _) => _
+            .ForEach(f.variations, (v, _) => _
+                .Execute(() => {
+                    Product product = new Product()
+                    {
+                        Id = f.productId,
+                        SKU = v.separateSKU,
+                        name = f.product.name,
+                        series = f.product.series,
+                    };
+                    returnProducts.Add(product);
+                })
+            )
+        )
+
+        .SwitchTo((IEnumerable<Product>)returnProducts)
+
+        .MapToDTOs<Product, Product.ProductReviewDTO>()
+
+        .EndAndReturn();        
+    }
+    */
+
     public struct UserAddForm
     {
         public Product.UserAddForm product { get; set; }
