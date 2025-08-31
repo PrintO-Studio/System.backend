@@ -7,13 +7,16 @@ using static PrintO.Models.Products.Product;
 
 namespace PrintO.Models.Products;
 
-public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<AddForm>, IUpdateable<UpdateForm>, IUpdateable<UpdateSKU>
 {
     [Key]
     public int Id { get; set; }
 
+    [StringLength(PRODUCT_SKU_MAX_LENGTH, MinimumLength = 1), Column("SKU")]
+    public string oldSKU { get; set; } = null!;
     [StringLength(PRODUCT_SKU_MAX_LENGTH, MinimumLength = 1)]
-    public string SKU { get; set; } = null!;
+    public string newSKU { get; set; } = null!;
+
     [StringLength(PRODUCT_NAME_MAX_LENGTH, MinimumLength = 1)]
     public string name { get; set; } = null!;
     [StringLength(PRODUCT_SERIES_MAX_LENGTH)]
@@ -45,7 +48,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
 
     public bool AddFill(AddForm form)
     {
-        SKU = form.userAddForm.SKU;
+        newSKU = form.userAddForm.SKU;
         name = form.userAddForm.name;
         series = form.userAddForm.series;
         description = form.userAddForm.description;
@@ -94,7 +97,8 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         return new
         {
             Id,
-            SKU,
+            oldSKU,
+            newSKU,
             name,
             series,
             description,
@@ -148,7 +152,8 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         return new ProductReviewDTO()
         {
             id = Id,
-            SKU = SKU,
+            oldSKU = oldSKU,
+            newSKU = newSKU,
             name = name,
             series = series,
             primaryImage = primaryImagePath,
@@ -170,6 +175,13 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
             },
             warehouseStorageNumber = warehouseStorageNumber,
         };
+    }
+
+    public bool UpdateFill(UpdateSKU form)
+    {
+        newSKU = form.newSKU;
+
+        return true;
     }
 
     public const int PRODUCT_SKU_MAX_LENGTH = 20;
@@ -218,11 +230,22 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
     public struct ProductReviewDTO
     {
         public int id { get; set; }
-        public string SKU { get; set; }
+        public string oldSKU { get; set; }
+        public string newSKU { get; set; }
         public string name { get; set; }
         public string? series { get; set; }
         public object? primaryImage { get; set; }
         public object? versions { get; set; }
         public int? warehouseStorageNumber { get; set; }
+    }
+
+    public struct UpdateSKU
+    {
+        public string newSKU { get; set; }
+
+        public UpdateSKU(string newSKU)
+        {
+            this.newSKU = newSKU;
+        }
     }
 }

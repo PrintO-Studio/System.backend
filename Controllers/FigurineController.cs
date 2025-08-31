@@ -1,10 +1,15 @@
+using Dumpify;
 using Microsoft.AspNetCore.Mvc;
 using Minio;
 using Minio.DataModel;
+using Pomelo.EntityFrameworkCore.MySql.Metadata.Internal;
+using PrintO.Intergrations;
 using PrintO.Models;
 using PrintO.Models.Products;
 using PrintO.Models.Products.Figurine;
 using PrintO.Query;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using Zorro.Data;
 using Zorro.Middlewares;
 using Zorro.Modules.JwtBearer.Attributes;
@@ -12,6 +17,7 @@ using Zorro.Query;
 using Zorro.Query.Essentials;
 using Zorro.Query.Essentials.BucketRepository;
 using Zorro.Query.Essentials.ModelRepository;
+using Zorro.Secrets;
 
 namespace PrintO;
 
@@ -52,7 +58,7 @@ public class FigurineController : Controller
 
         .CheckStoreMembership(out int selectedStoreId)
 
-        .GetAll<Product>(p => p.storeId == selectedStoreId && p.SKU == input.product.SKU)
+        .GetAll<Product>(p => p.storeId == selectedStoreId && p.newSKU == input.product.SKU)
 
         .If(p => p?.Any() ?? false, _ => _
             .Throw(new (
@@ -176,8 +182,45 @@ public class FigurineController : Controller
     }
 
     /*
+    class SKUMapping
+    {
+        public string OldSku { get; set; }
+        public string NewSku { get; set; }
+    }
+
     [HttpPatch]
-    [Route("/products/figurines")]
+    [Route("/products/figurines/ASSIGN-SKUS")]
+    public IActionResult AssignSKUs()
+    {
+
+        var mappingJson = System.IO.File.ReadAllText("mapping.json");
+
+        var mapping = JsonSerializer.Deserialize<List<SKUMapping>>(mappingJson);
+
+        var g = mapping!.Select((m) => new { m.OldSku, fu = new FigurineVariation.UpdateSKU(m.NewSku), pu = new Product.UpdateSKU(m.NewSku) });
+
+        return this.StartQuery()
+
+        .ForEach(g, (i, _) => _
+            .Execute(() => i.Dump())
+
+            .Try(_ => _
+                .Find<FigurineVariation>(v => v.separateSKU == i.OldSku)
+                .Update(i.fu)
+            )
+
+            .Try(_ => _
+                .Find<Product>(p => p.oldSKU == i.OldSku)
+                .Update(i.pu)
+            )
+
+        )
+
+        .End();
+    }
+
+    [HttpPatch]
+    [Route("/products/figurines/WRITE-ALL-VARIANTS")]
     public IActionResult WriteAllVariants()
     {
         return this.StartQuery()
@@ -196,7 +239,7 @@ public class FigurineController : Controller
                     Product product = new Product()
                     {
                         Id = f.productId,
-                        SKU = v.separateSKU,
+                        newSKU = v.separateSKU,
                         name = f.product.name,
                         series = f.product.series,
                     };
