@@ -1,5 +1,6 @@
 using PrintO.Models.Products.Figurine;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using Zorro.Data;
 using Zorro.Query;
 
@@ -23,16 +24,20 @@ public static class GenerateUniqueFigurineVariationSKUQUery
 
         if (figurine.variations.Count == 0)
         {
-            separateSKU = figurine.product.SKU;
+            separateSKU = figurine.product.newSKU;
             return context;
         }
         else
         {
-            int variationCounter = 1;
-            string newSeparateSKU = string.Empty;
+            string prefix = Regex.Match(figurine.product.newSKU, @"^\D+").Value;
+            int number = int.Parse(Regex.Match(figurine.product.newSKU, @"\d+").Value);
+
+            string newSeparateSKU;
+
             do
             {
-                newSeparateSKU = $"{figurine.product.SKU}.{variationCounter++}";
+                number++;
+                newSeparateSKU = prefix + number;
             }
             while (fvRepo.Find(v => v.separateSKU == newSeparateSKU) is not null);
 

@@ -42,7 +42,7 @@ public class ProductController : Controller
         .If(!string.IsNullOrEmpty(searchQuery), _ => _
              .Eject(_ => _.GetAll<Product>(
                  p => p.storeId == selectedStoreId &&
-                 (p.name.Contains(searchQuery!) || p.SKU.Contains(searchQuery!) ||
+                 (p.name.Contains(searchQuery!) || p.oldSKU.Contains(searchQuery!) || p.newSKU.Contains(searchQuery!) ||
                     (!string.IsNullOrEmpty(p.series) && p.series!.Contains(searchQuery!)))),
              out var products)
 

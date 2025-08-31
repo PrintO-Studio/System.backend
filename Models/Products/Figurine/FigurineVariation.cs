@@ -7,7 +7,7 @@ using static PrintO.Models.Products.Figurine.FigurineVariation;
 
 namespace PrintO.Models.Products.Figurine;
 
-public class FigurineVariation : IEntity, ISellable, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>
+public class FigurineVariation : IEntity, ISellable, IDTO<object>, IAddable<AddForm>, IUpdateable<UpdateForm>, IUpdateable<UpdateSKU>
 {
     [Key]
     public int Id { get; set; }
@@ -145,6 +145,13 @@ public class FigurineVariation : IEntity, ISellable, IDTO<object>, IAddable<AddF
         };
     }
 
+    public bool UpdateFill(UpdateSKU form)
+    {
+        separateSKU = form.newSeparateSKU;
+
+        return true;
+    }
+
     public const int FIGURINE_VARIATION_NAME_MAX_LENGTH = 50;
     public const int FIGURINE_VARIATION_WEIGHT_GR_MAX = 10000; // 10Kg
     public const int FIGURINE_VARIATION_WEIGHT_GR_MIN = 1;
@@ -244,5 +251,15 @@ public class FigurineVariation : IEntity, ISellable, IDTO<object>, IAddable<AddF
         public Integrity? integrity { get; set; }
         [Range(FIGURINE_VARIATION_QUANTITY_MIN, FIGURINE_VARIATION_QUANTITY_MAX)]
         public uint? quantity { get; set; }
+    }
+
+    public struct UpdateSKU
+    {
+        public string newSeparateSKU { get; set; }
+
+        public UpdateSKU(string newSeparateSKU)
+        {
+            this.newSeparateSKU = newSeparateSKU;            
+        }
     }
 }

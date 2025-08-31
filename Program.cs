@@ -70,7 +70,7 @@ JwtBearerService.TokenValidationMaster = new JwtBearerService.TokenValidationBui
 
 
 ZorroDI
-    .InitRaw(args, LogLevel.Warning)
+    .InitRaw(args)
     .AddInfisical(infisicalSettings)
     .AddDatabase<DataContext>(MySQLService.UseMySQL)
     .AddAuthAndIdentity<User, DataContext, UserRole, int>(JwtBearerService.UseJwtBearer)
