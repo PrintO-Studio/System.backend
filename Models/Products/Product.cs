@@ -13,7 +13,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
     public int Id { get; set; }
 
     [StringLength(PRODUCT_SKU_MAX_LENGTH, MinimumLength = 1), Column("SKU")]
-    public string oldSKU { get; set; } = null!;
+    public string? oldSKU { get; set; }
     [StringLength(PRODUCT_SKU_MAX_LENGTH, MinimumLength = 1)]
     public string newSKU { get; set; } = null!;
 
