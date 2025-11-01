@@ -25,6 +25,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
     public string description { get; set; } = null!;
     public bool explicitContent { get; set; } = false;
     public int? warehouseStorageNumber { get; set; }
+    public int? storageQuantity { get; set; }
 
     [ForeignKey(nameof(store))]
     public int storeId { get; set; }
@@ -55,6 +56,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         storeId = form.storeId;
         explicitContent = form.userAddForm.explicitContent ?? false;
         warehouseStorageNumber = form.userAddForm.warehouseStorageNumber;
+        storageQuantity = form.userAddForm.storageQuantity;
 
         return true;
     }
@@ -70,6 +72,8 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
             explicitContent = form.explicitContent.Value;
         if (form.warehouseStorageNumber.HasValue)
             warehouseStorageNumber = form.warehouseStorageNumber.Value;
+        if (form.storageQuantity.HasValue)
+            storageQuantity = form.storageQuantity.Value;
 
         version++;
 
@@ -124,6 +128,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
             },
             notes = notes.Select(n => n.MapToDTO(context)),
             warehouseStorageNumber,
+            storageQuantity
         };
     }
 
@@ -174,6 +179,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
                 }
             },
             warehouseStorageNumber = warehouseStorageNumber,
+            storageQuantity = storageQuantity,
         };
     }
 
@@ -213,6 +219,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         public string description { get; set; }
         public bool? explicitContent { get; set; }
         public int? warehouseStorageNumber { get; set; }
+        public int? storageQuantity { get; set; }
     }
 
     public struct UpdateForm
@@ -225,6 +232,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         public string? description { get; set; }
         public bool? explicitContent { get; set; }
         public int? warehouseStorageNumber { get; set; }
+        public int? storageQuantity { get; set; }
     }
 
     public struct ProductReviewDTO
@@ -237,6 +245,7 @@ public class Product : IEntity, IDTO<object>, IDTO<ProductReviewDTO>, IAddable<A
         public object? primaryImage { get; set; }
         public object? versions { get; set; }
         public int? warehouseStorageNumber { get; set; }
+        public int? storageQuantity { get; set; }
     }
 
     public struct UpdateSKU
